@@ -1,0 +1,112 @@
+<beans xmlns="https://audit.url"
+       xmlns:xsi="https://audit.url"
+       xmlns:util="https://audit.url" xsi:schemaLocation="
+        https://audit.xsd
+        https://audit.xsd">
+
+    <bean id="ignite.cfg" class="class_name" primary="true">
+        ...
+        <property name="includeEventTypes" ref="eventTypes"/>
+        <property name="localEventListeners" ref="eventListeners"/>
+        ...
+        <property name="pluginProviders">
+            <list>
+                ...
+                <ref bean="restProcessorPluginProvider"/>
+            </list>
+        </property>
+        ...
+        <property name="eventStorageSpi" ref="eventStorageSpi"/>
+    </bean>
+    ...
+    <util:list id="eventTypes" value-type="java.lang.Integer">
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_NODE_JOINED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_NODE_LEFT"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_NODE_FAILED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_NODE_VALIDATION_FAILED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_CACHE_STARTED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_CACHE_STOPPED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_CLUSTER_SNAPSHOT_STARTED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_CLUSTER_SNAPSHOT_FINISHED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_CLUSTER_SNAPSHOT_FAILED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_CLUSTER_SNAPSHOT_RESTORE_STARTED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_CLUSTER_SNAPSHOT_RESTORE_FINISHED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_CLUSTER_SNAPSHOT_RESTORE_FAILED"/>
+        <util:constant static-field="org.apache.ignite.events.EventType.EVT_SQL_QUERY_EXECUTION"/>
+        <value>#{T(value).EVT_AUTHORIZATION_SUCCEEDED.eventCode()}</value>
+        <value>#{T(value).EVT_AUTHORIZATION_FAILED.eventCode()}</value>
+        <value>#{T(value).EVT_AUTHENTICATION_SUCCEEDED.eventCode()}</value>
+        <value>#{T(value).EVT_AUTHENTICATION_FAILED.eventCode()}</value>
+        <value>#{T(value).EVT_CERTIFICATE_EXPIRED.eventCode()}</value>
+        <value>#{T(value).EVT_CERTIFICATE_EXPIRING.eventCode()}</value>
+        <value>#{T(value).EVT_USER_CREATED.eventCode()}</value>
+        <value>#{T(value).EVT_USER_REMOVED.eventCode()}</value>
+        <value>#{T(value).EVT_USER_UPDATED.eventCode()}</value>
+        <value>#{T(value).EVT_USER_GET.eventCode()}</value>
+        <value>#{T(value).EVT_ROLE_CREATED.eventCode()}</value>
+        <value>#{T(value).EVT_ROLE_REMOVED.eventCode()}</value>
+        <value>#{T(value).EVT_ROLE_UPDATED.eventCode()}</value>
+        <value>#{T(value).EVT_ROLE_GET.eventCode()}</value>
+        <value>#{T(value).EVT_USER_PASSWORD_UPDATED.eventCode()}</value>
+        <value>#{T(value).EVT_SECURITY_MANAGEMENT_FAILED.eventCode()}</value>
+        <util:constant static-field="name.RestEventType.EVT_REST_REQ_SUCCEEDED"/>
+        <util:constant static-field="name.RestEventType.EVT_REST_REQ_FAILED"/>
+        <util:constant static-field="name.RestEventType.EVT_REST_REQ_AUTHENTICATION_FAILED"/>
+        <util:constant static-field="name.RestEventType.EVT_REST_REQ_AUTHORIZATION_FAILED"/>
+        <util:constant static-field="name.RestEventType.EVT_REST_REQ_ILLEGAL_ARGUMENT"/>
+        <util:constant static-field="name.RestEventType.EVT_UNEXPECTED_REST_REQ_EXECUTION_STATUS"/>
+    </util:list>
+
+    <bean id="auditEventListener" class="class_name" >
+        <constructor-arg ref="dataProvider"/>
+        <constructor-arg ref="auditClientFactory"/>
+    </bean>
+
+    <bean id="localhostInetAddress" class="java.net.InetAddress" factory-method="getLocalHost"/>
+    <bean id="auditConfigurator" class="class_name">
+        <constructor-arg name="artifactId" value="audit2-client" />
+        <property name="ignoreUnresolvablePlaceholders" value="false" />
+    </bean>
+    <bean id="auditMetadataProvider" class="class_name"/>
+    <bean id="auditClientFactory" class="class_name">
+        <constructor-arg name="metadataProvider" ref="auditMetadataProvider"/>
+        <constructor-arg name="props" value="#{auditConfigurator.getPlatformPropertyLoader().loadProperties()}" />
+        <constructor-arg name="moduleId" value="igniteSE"/>
+        <constructor-arg name="nodeId" value="#{localhostInetAddress.hostName}"/>
+    </bean>
+    
+    <util:map id="eventListeners"
+              map-class="java.util.HashMap"
+              key-type="name_key_type"
+              value-type="java.lang.Integer[]">
+        <entry key-ref="auditEventListener" value-ref="eventTypes"/>
+    </util:map>
+
+    <!-- Ниже - настройка обработки событий от GridClient-подключений. -->
+
+    <util:list id="cmdEventIgnoreList" value-type="java.lang.String">
+        <!--Имена REST-команд, по которым не будет происходить запись в аудит. -->
+        <value>NOOP</value>
+    </util:list>
+
+    <bean id="restProcessorConfiguration" class="class_name">
+        <property name="commandEventIgnoreList" ref="cmdEventIgnoreList"/>
+    </bean>
+
+    <bean id="restProcessorPluginProvider" class="class_name">
+        <property name="configuration" ref="restProcessorConfiguration"/>
+    </bean>
+
+    <bean id="eventsFilter" class="class_name">
+        <constructor-arg>
+            <list>
+                <util:constant static-field="name.EventType.EVT_SQL_QUERY_EXECUTION"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="eventStorageSpi" class="name.eventstorage.memory.MemoryEventStorageSpi">
+        <property name="filter" ref="eventsFilter"/>
+    </bean>
+    ...
+</beans>

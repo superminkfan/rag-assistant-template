@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="ignite.cfg" class="org.apache.ignite.configuration.IgniteConfiguration">
+
+        <property name="clientMode" value="true"/>
+
+        <property name="peerClassLoadingEnabled" value="true"/>
+
+        <property name="binaryConfiguration">
+            <bean class="org.apache.ignite.configuration.BinaryConfiguration">
+                <property name="compactFooter" value="true"/>
+            </bean>
+        </property>
+
+        <property name="discoverySpi">
+            <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                <property name="ipFinder">
+                    <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder">
+                        <property name="addresses">
+                            <list>
+                                <value>10.40.6.1:47500..47510</value>
+                                <value>10.40.6.2:47500..47510</value>
+                            </list>
+                        </property>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+
+
+
+        <property name="pluginProviders">
+            <list>
+                <ref bean="securityPlugin"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="securityPlugin" class="com.sbt.security.ignite.core.SecurityPluginProvider">
+        <constructor-arg>
+            <bean class="com.sbt.security.ignite.core.SecurityPluginConfiguration">
+                <property name="nodeLogin" value="ise_client"/>
+                <property name="nodePassword" value="******"/>
+                <property name="selfKeyStorePath" value="/opt/ignite/server/config/ise_dev_c_ise_client.jks"/>
+                <property name="selfKeyStorePassword" value="******"/>
+                <property name="trustStorePath" value="/opt/ignite/server/config/ise_dev_truststore.jks"/>
+                <property name="trustStorePassword" value="******"/>
+            </bean>
+        </constructor-arg>
+    </bean>
+
+</beans>
