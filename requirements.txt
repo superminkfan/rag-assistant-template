@@ -1,7 +1,6 @@
-fastapi
-uvicorn[standard]
 langchain
 langchain-community
 langchain-chroma
 langchain-ollama
+python-telegram-bot
 pytest
