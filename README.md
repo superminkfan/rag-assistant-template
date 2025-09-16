@@ -6,10 +6,10 @@ product documentation.  Documents are stored in a persistent
 [Chroma](https://www.trychroma.com/) vector database (bundled in `db_metadata_v5/`),
 and responses are generated with local [Ollama](https://ollama.com/) models via LangChain.
 
-The former FastAPI wrapper has been removed in favour of direct access to the
-underlying RAG provider.  You can now interact with the system either by importing
-`run_query` or by using the lightweight command-line interface exposed by
-`main.py`.
+The former FastAPI wrapper has been replaced with a Telegram bot entry point in
+`main.py`.  The bot is the primary interface on both desktop and mobile clients,
+while the underlying provider can still be reused directly from Python code when
+needed.
 
 ## Requirements
 - Python 3.10 or higher.
@@ -39,20 +39,36 @@ underlying RAG provider.  You can now interact with the system either by importi
    [Requirements](#requirements) section manually.
 
 ## Usage
-Run ad-hoc queries with the CLI:
-```bash
-python -m main "How do I configure the agent?" --chat-id demo
-```
+Follow these steps to run the Telegram bot:
 
-Alternatively, interact with the provider directly from Python:
-```python
-from main import run_query
+1. **Set your Telegram bot token**
+   Obtain a token from [@BotFather](https://t.me/BotFather) and expose it via the
+   `TELEGRAM_TOKEN` environment variable before starting the bot:
+   ```bash
+   export TELEGRAM_TOKEN="123456789:ABCDEF"          # Linux / macOS
+   set TELEGRAM_TOKEN=123456789:ABCDEF               # Windows (Command Prompt)
+   $Env:TELEGRAM_TOKEN = "123456789:ABCDEF"         # Windows (PowerShell)
+   ```
 
-print(run_query("How do I configure the agent?", chat_id="demo"))
-```
+2. **Install the required Ollama models**
+   Ensure the Ollama runtime has the models the bot expects:
+   ```bash
+   ollama pull llama3.2:latest
+   ollama pull mxbai-embed-large
+   ```
 
-The `chat_id` parameter lets you preserve conversation state across multiple
-queries.  Provide the same identifier to maintain a running dialogue.
+3. **Run the bot**
+   ```bash
+   python main.py
+   ```
+   The script launches `ollama serve` automatically and begins polling for
+   Telegram messages.
+
+4. **Chat with your assistant from Telegram**
+   Open a conversation with your bot from the official Telegram clients on
+   desktop or mobile and start sending questions.  Conversations are scoped to
+   the chat in which they are sent, so history persists naturally per user or
+   group.
 
 ## Configuration
 - `db_metadata_v5/` – directory that stores the persistent Chroma database.
@@ -72,7 +88,7 @@ up any web framework components.
 .
 ├── data/                # Source documentation used to build the vector store
 ├── db_metadata_v5/      # Persisted Chroma database files
-├── main.py              # CLI helpers for interacting with the RAG provider
+├── main.py              # Telegram bot entry point for the RAG provider
 ├── models/              # Data models shared across the project
 ├── providers/           # Integration with the Ollama-based RAG provider
 ├── scripts/             # Utilities for scraping and ingesting documentation into Chroma
