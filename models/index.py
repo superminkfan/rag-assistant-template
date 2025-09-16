@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
-class ChatMessage(BaseModel):
+@dataclass
+class ChatMessage:
     question: str

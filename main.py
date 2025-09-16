@@ -1,53 +1,53 @@
-import os
-from typing import List
+"""Convenience helpers for running Retrieval-Augmented Generation (RAG) queries.
 
-from fastapi.middleware.cors import CORSMiddleware
+This module keeps a lightweight interface around :func:`providers.ollama.query_rag`
+so that developers can experiment with the pipeline from the command line.  The
+original FastAPI application has been removed, but importing :mod:`main` still
+provides a simple entry point for issuing questions against the RAG stack.
+"""
+
+from __future__ import annotations
+
+import argparse
+from typing import Optional
 
 from models.index import ChatMessage
 from providers.ollama import query_rag
 
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
+
+def run_query(question: str, chat_id: str = "") -> str:
+    """Execute a single RAG query and return the generated response."""
+
+    return query_rag(ChatMessage(question=question), session_id=chat_id)
 
 
-def _load_allowed_origins() -> List[str]:
-    """Return a list of allowed CORS origins.
+def run_cli(argv: Optional[list[str]] = None) -> int:
+    """Launch a small command-line interface for ad-hoc queries.
 
-    Origins can be supplied via the ``ALLOWED_ORIGINS`` environment variable
-    as a comma separated list. When the variable is not provided, fall back to
-    a set of local development domains.
+    Parameters
+    ----------
+    argv:
+        Optional list of command-line arguments.  When ``None`` (the default),
+        :data:`sys.argv` is used instead.
+
+    Returns
+    -------
+    int
+        Exit code suitable for ``sys.exit``.
     """
 
-    env_value = os.getenv("ALLOWED_ORIGINS")
-    if env_value:
-        return [origin.strip() for origin in env_value.split(",") if origin.strip()]
+    parser = argparse.ArgumentParser(description="Query the RAG knowledge base")
+    parser.add_argument("question", help="User question to send to the RAG pipeline")
+    parser.add_argument(
+        "--chat-id",
+        default="",
+        help="Identifier for the conversation so that history can be preserved",
+    )
+    args = parser.parse_args(argv)
 
-    return [
-        "http://localhost",
-        "http://localhost:3000",
-        "http://127.0.0.1",
-        "http://127.0.0.1:3000",
-    ]
-
-
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_load_allowed_origins(),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    print(run_query(args.question, chat_id=args.chat_id))
+    return 0
 
 
-app.mount("/public", StaticFiles(directory="public"), name="public")
-
-
-@app.get("/")
-async def read_root():
-    return {"Hello": "world"}
-
-
-@app.post("/chat/{chat_id}")
-async def ask(chat_id: str, message: ChatMessage):
-    return {"response": query_rag(message, chat_id)}
+if __name__ == "__main__":  # pragma: no cover - thin CLI wrapper
+    raise SystemExit(run_cli())
