@@ -1,53 +1,109 @@
-"""Convenience helpers for running Retrieval-Augmented Generation (RAG) queries.
-
-This module keeps a lightweight interface around :func:`providers.ollama.query_rag`
-so that developers can experiment with the pipeline from the command line.  The
-original FastAPI application has been removed, but importing :mod:`main` still
-provides a simple entry point for issuing questions against the RAG stack.
-"""
+"""Telegram bot entry point for the Retrieval-Augmented Generation assistant."""
 
 from __future__ import annotations
 
-import argparse
+import logging
+import os
+import subprocess
 from typing import Optional
 
+from telegram import Update
+from telegram.ext import (
+    Application,
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
+
 from models.index import ChatMessage
-from providers.ollama import query_rag
+from providers import ollama
+
+LOGGER = logging.getLogger(__name__)
 
 
-def run_query(question: str, chat_id: str = "") -> str:
-    """Execute a single RAG query and return the generated response."""
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Greet the user when they issue the /start command."""
 
-    return query_rag(ChatMessage(question=question), session_id=chat_id)
+    if update.message is None:
+        return
 
+    user_first_name: Optional[str] = None
+    if update.effective_user is not None:
+        user_first_name = update.effective_user.first_name
 
-def run_cli(argv: Optional[list[str]] = None) -> int:
-    """Launch a small command-line interface for ad-hoc queries.
+    greeting = "Hello!"
+    if user_first_name:
+        greeting = f"Hello, {user_first_name}!"
 
-    Parameters
-    ----------
-    argv:
-        Optional list of command-line arguments.  When ``None`` (the default),
-        :data:`sys.argv` is used instead.
-
-    Returns
-    -------
-    int
-        Exit code suitable for ``sys.exit``.
-    """
-
-    parser = argparse.ArgumentParser(description="Query the RAG knowledge base")
-    parser.add_argument("question", help="User question to send to the RAG pipeline")
-    parser.add_argument(
-        "--chat-id",
-        default="",
-        help="Identifier for the conversation so that history can be preserved",
+    await update.message.reply_text(
+        f"{greeting} I'm your RAG assistant. Ask me a question and I'll search the knowledge base for you."
     )
-    args = parser.parse_args(argv)
-
-    print(run_query(args.question, chat_id=args.chat_id))
-    return 0
 
 
-if __name__ == "__main__":  # pragma: no cover - thin CLI wrapper
-    raise SystemExit(run_cli())
+async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle incoming text messages by querying the RAG pipeline."""
+
+    if update.message is None:
+        return
+
+    text = update.message.text
+    if not text:
+        return
+
+    chat_id = str(update.effective_chat.id) if update.effective_chat else ""
+
+    try:
+        response_text = ollama.query_rag(ChatMessage(question=text), chat_id)
+    except Exception:  # pragma: no cover - defensive logging
+        LOGGER.exception("Failed to query RAG backend for chat %s", chat_id)
+        await update.message.reply_text(
+            "Sorry, something went wrong while processing your request. Please try again later."
+        )
+        return
+
+    await update.message.reply_text(response_text)
+
+
+def build_application(token: str) -> Application:
+    """Construct the Telegram application with the configured handlers."""
+
+    application = ApplicationBuilder().token(token).build()
+    application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+    return application
+
+
+def main() -> None:
+    """Run the Telegram bot backed by the Ollama RAG pipeline."""
+
+    logging.basicConfig(level=logging.INFO)
+
+    token = os.getenv("TELEGRAM_TOKEN")
+    if not token:
+        raise RuntimeError(
+            "Environment variable TELEGRAM_TOKEN must be set to start the Telegram bot."
+        )
+
+    try:
+        ollama_process = subprocess.Popen(["ollama", "serve"])
+    except OSError as exc:  # pragma: no cover - depends on host environment
+        raise RuntimeError("Failed to start the Ollama backend using 'ollama serve'.") from exc
+
+    application = build_application(token)
+
+    try:
+        application.run_polling()
+    finally:
+        ollama_process.terminate()
+        try:
+            ollama_process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            LOGGER.warning("Ollama backend did not terminate gracefully; killing it.")
+            ollama_process.kill()
+            ollama_process.wait()
+
+
+if __name__ == "__main__":  # pragma: no cover - runtime entry point
+    main()
