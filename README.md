@@ -13,7 +13,7 @@ The service currently exposes two endpoints:
 - Access to an Ollama runtime with the `llama3.2:latest` and `mxbai-embed-large` models installed.
 - The dependencies listed below (they can be installed into a virtual environment):
   ```bash
-  pip install fastapi uvicorn[standard] langchain langchain-community langchain-chroma langchain-ollama langchain-together pytest
+  pip install fastapi uvicorn[standard] langchain langchain-community langchain-chroma langchain-ollama pytest
   ```
 
 ## Installation
@@ -58,7 +58,7 @@ The included tests cover the health-check endpoint and verify that the `/chat` r
 ├── db_metadata_v5/      # Persisted Chroma database files
 ├── main.py              # FastAPI application entry point
 ├── models/              # Pydantic models shared across the API
-├── providers/           # Integrations with different LLM providers (Ollama, Together)
+├── providers/           # Integration with the Ollama-based RAG provider
 ├── public/              # Static assets served by the API
 ├── scripts/             # Utilities for scraping and ingesting documentation into Chroma
 └── tests/               # Pytest suite exercising the API
