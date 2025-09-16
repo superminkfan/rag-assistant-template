@@ -1,7 +1,9 @@
 # Langchain dependencies
+import argparse
 import hashlib
 import os
 import shutil
+from pathlib import Path
 
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import MarkdownTextSplitter
@@ -10,9 +12,10 @@ from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
 
 
-# Path to the directory to save Chroma database
-CHROMA_PATH = "../db_metadata_v5"
-DATA_PATH = "../docs"
+# Paths resolved relative to this file so the script works from any cwd
+BASE_DIR = Path(__file__).resolve().parent
+CHROMA_PATH = str((BASE_DIR / "../db_metadata_v5").resolve())
+DATA_PATH = str((BASE_DIR / "../docs").resolve())
 global_unique_hashes = set()
 
 
@@ -43,26 +46,21 @@ def hash_text(text):
     return hash_object.hexdigest()
 
 
-def split_text(documents: list[Document]):
+def split_text(documents: list[Document], chunk_size: int, chunk_overlap: int):
     """
     Split the text content of the given list of Document objects into smaller chunks.
+
     Args:
-    documents (list[Document]): List of Document objects containing text content to split.
+        documents (list[Document]): List of Document objects containing text content to split.
+        chunk_size (int): Maximum number of characters allowed in a chunk.
+        chunk_overlap (int): Number of characters to overlap between chunks.
+
     Returns:
-    list[Document]: List of Document objects representing the split text chunks.
-    """
-    # Initialize text splitter with specified parameters
-    """
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=300,  # Size of each chunk in characters
-        chunk_overlap=100,  # Overlap between consecutive chunks
-        length_function=len,  # Function to compute the length of the text
-        add_start_index=True,  # Flag to add start index to each chunk
-    )
+        list[Document]: List of Document objects representing the split text chunks.
     """
     text_splitter = MarkdownTextSplitter(
-        chunk_size=500,  # Size of each chunk in characters
-        chunk_overlap=100,  # Overlap between consecutive chunks
+        chunk_size=chunk_size,  # Size of each chunk in characters
+        chunk_overlap=chunk_overlap,  # Overlap between consecutive chunks
         length_function=len,  # Function to compute the length of the text
     )
 
@@ -109,14 +107,41 @@ def save_to_chroma(chunks: list[Document]):
     print(f"Saved {len(chunks)} chunks to {CHROMA_PATH}.")
 
 
-def generate_data_store():
+def generate_data_store(chunk_size: int, chunk_overlap: int):
     """
-    Function to generate vector database in chroma from documents.
+    Function to generate a Chroma vector database from documents using the provided chunk settings.
+
+    Args:
+        chunk_size (int): Maximum number of characters allowed in a chunk.
+        chunk_overlap (int): Number of characters to overlap between chunks.
     """
     documents = load_documents()  # Load documents from a source
-    chunks = split_text(documents)  # Split documents into manageable chunks
+    chunks = split_text(documents, chunk_size, chunk_overlap)  # Split documents into manageable chunks
     save_to_chroma(chunks)  # Save the processed data to a data store
 
 
 if __name__ == "__main__":
-    generate_data_store()
+    parser = argparse.ArgumentParser(description="Ingest markdown documents into a Chroma vector store.")
+    parser.add_argument(
+        "--chunk-size",
+        type=int,
+        default=500,
+        help="Maximum number of characters in each chunk (default: 500)",
+    )
+    parser.add_argument(
+        "--chunk-overlap",
+        type=int,
+        default=100,
+        help="Number of overlapping characters between chunks (default: 100)",
+    )
+
+    args = parser.parse_args()
+
+    if args.chunk_size <= 0:
+        parser.error("--chunk-size must be a positive integer")
+    if args.chunk_overlap < 0:
+        parser.error("--chunk-overlap must be zero or a positive integer")
+    if args.chunk_overlap >= args.chunk_size:
+        parser.error("--chunk-overlap must be smaller than --chunk-size")
+
+    generate_data_store(args.chunk_size, args.chunk_overlap)

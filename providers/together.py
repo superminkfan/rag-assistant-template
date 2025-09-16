@@ -1,6 +1,6 @@
 import pathlib
 
-from typing import List, Coroutine
+from typing import List
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -9,7 +9,6 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_together import ChatTogether
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.messages.utils import count_tokens_approximately
-# from langchain.retrievers.document_compressors import LLMChainExtractor
 
 from models.index import ChatMessage
 from utils.index import get_user_conversation, store_dialogs
@@ -41,12 +40,6 @@ Question: {question}
 #model = ChatTogether(model="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", temperature=0)
 model = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", temperature=0)
 free_model = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", temperature=0.1)
-
-# Setup Compressor (free version)
-"""
-model_compressor = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", temperature=0)
-compressor = LLMChainExtractor.from_llm(model_compressor)
-"""
 
 # Prepare the database
 db = Chroma(persist_directory=CHROMA_PATH,
@@ -170,32 +163,11 @@ async def query_rag(message: ChatMessage, session_id: str = ""):
         """)]
 
     found_context = db.similarity_search_with_relevance_scores(message.question, k=3)
-    """
-    print("ORIGINAL CONTEXT")
-    pretty_print_docs_with_score(found_context)
-    print("\r\n\r\n")
-    """
 
     rewritten_query = await rewrite_query(message.question, chat_history[session_id])
 
     # print("REWRITTEN QUERY", rewritten_query.content, end=f"\n\n{'-'*50}\n\n")
     additional_context = db.similarity_search_with_relevance_scores(rewritten_query.content, k=3)
-    """
-    print("ADDITIONAL CONTEXT")
-    pretty_print_docs_with_score(additional_context)
-    print("\r\n\r\n")
-    """
-
-    """
-    compression_retriever = ContextualCompressionRetriever(
-        base_compressor=compressor,
-        base_retriever=db.as_retriever(search_kwargs={"k": 3})
-    )
-
-    compressed_docs = compression_retriever.invoke(rewritten_query.content)
-    print("COMPRESSED DOCS")
-    pretty_print_docs(compressed_docs)
-    """
 
     messages = trim_messages(chat_history[session_id], strategy="last", token_counter=count_tokens_approximately,
                              max_tokens=2_056, start_on="human", allow_partial=False)
