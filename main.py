@@ -8,6 +8,11 @@ import subprocess
 from typing import Optional
 
 from telegram import Update
+from telegram.constants import ChatAction
+try:  # pragma: no cover - depends on telegram package version
+    from telegram.helpers import ChatActionSender  # type: ignore[attr-defined]
+except ImportError:  # pragma: no cover - depends on telegram package version
+    ChatActionSender = None  # type: ignore[assignment]
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -52,10 +57,21 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not text:
         return
 
-    chat_id = str(update.effective_chat.id) if update.effective_chat else ""
+    chat_id = update.effective_chat.id if update.effective_chat else None
 
     try:
-        response_text = ollama.query_rag(ChatMessage(question=text), chat_id)
+        if chat_id is not None and ChatActionSender is not None:
+            async with ChatActionSender(
+                action=ChatAction.TYPING, chat_id=chat_id, bot=context.bot
+            ):
+                response_text = ollama.query_rag(ChatMessage(question=text), str(chat_id))
+        else:
+            if chat_id is not None:
+                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+                session_id = str(chat_id)
+            else:
+                session_id = ""
+            response_text = ollama.query_rag(ChatMessage(question=text), session_id)
     except Exception:  # pragma: no cover - defensive logging
         LOGGER.exception("Failed to query RAG backend for chat %s", chat_id)
         await update.message.reply_text(
