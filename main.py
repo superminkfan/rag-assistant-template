@@ -9,6 +9,7 @@ from typing import Optional
 
 from telegram import Update
 from telegram.constants import ChatAction, MessageLimit
+from telegram.error import TelegramError
 try:  # pragma: no cover - depends on telegram package version
     from telegram.helpers import ChatActionSender  # type: ignore[attr-defined]
 except ImportError:  # pragma: no cover - depends on telegram package version
@@ -124,8 +125,19 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         )
         return
 
-    for chunk in chunk_response(response_text):
-        await update.message.reply_text(chunk)
+    try:
+        chunks = chunk_response(response_text)
+        for chunk in chunks:
+            await update.message.reply_text(chunk)
+    except TelegramError:
+        LOGGER.exception("Failed to send response to chat %s", chat_id)
+        apology = "Sorry, I couldn't deliver the response due to a Telegram error. Please try again later."
+        if chat_id is not None:
+            try:
+                await context.bot.send_message(chat_id=chat_id, text=apology)
+            except TelegramError:
+                LOGGER.exception("Failed to send failure notice to chat %s", chat_id)
+        return
 
 
 def build_application(token: str) -> Application:
