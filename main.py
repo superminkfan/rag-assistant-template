@@ -8,7 +8,7 @@ import subprocess
 from typing import Optional
 
 from telegram import Update
-from telegram.constants import ChatAction
+from telegram.constants import ChatAction, MessageLimit
 try:  # pragma: no cover - depends on telegram package version
     from telegram.helpers import ChatActionSender  # type: ignore[attr-defined]
 except ImportError:  # pragma: no cover - depends on telegram package version
@@ -26,6 +26,51 @@ from models.index import ChatMessage
 from providers import ollama
 
 LOGGER = logging.getLogger(__name__)
+
+
+def chunk_response(text: str, limit: int = int(MessageLimit.MAX_TEXT_LENGTH)) -> list[str]:
+    """Split *text* into Telegram-sized chunks while respecting Markdown code blocks."""
+
+    if not text:
+        return []
+
+    def last_safe_break(segment: str) -> int:
+        inside_code = False
+        last_break = -1
+        idx = 0
+        while idx < len(segment):
+            if segment.startswith("```", idx):
+                inside_code = not inside_code
+                idx += 3
+                continue
+            if segment[idx] == "\n" and not inside_code:
+                last_break = idx
+            idx += 1
+        return last_break
+
+    chunks: list[str] = []
+    position = 0
+    text_length = len(text)
+    while position < text_length:
+        end = min(position + limit, text_length)
+        segment = text[position:end]
+        if end < text_length:
+            split_index = last_safe_break(segment)
+            if split_index != -1:
+                split_index += 1  # include the newline at the break point
+            else:
+                split_index = len(segment)
+        else:
+            split_index = len(segment)
+
+        if split_index == 0:
+            split_index = len(segment)
+
+        chunk = segment[:split_index]
+        chunks.append(chunk)
+        position += split_index
+
+    return chunks
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -79,7 +124,8 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         )
         return
 
-    await update.message.reply_text(response_text)
+    for chunk in chunk_response(response_text):
+        await update.message.reply_text(chunk)
 
 
 def build_application(token: str) -> Application:
