@@ -69,9 +69,14 @@ def query_rag(message: ChatMessage, session_id: str = "") -> str:
     if session_id not in chat_history:
         chat_history[session_id] = []
 
+    context_documents = _db.similarity_search(message.question, k=3)
+
+    if not context_documents:
+        return "Hmm, I am not sure. Let me check and get back to you."
+
     response_text = _document_chain.invoke(
         {
-            "context": _db.similarity_search(message.question, k=3),
+            "context": context_documents,
             "question": message.question,
             "chat_history": chat_history[session_id],
         }
