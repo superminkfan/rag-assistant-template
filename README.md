@@ -4,7 +4,9 @@
 This repository contains utilities for querying a Retrieval-Augmented Generation (RAG) pipeline that was built from DataGrid
 product documentation.  Documents are stored in a persistent
 [Chroma](https://www.trychroma.com/) vector database (bundled in `db_metadata_v5/`),
-and responses are generated with local [Ollama](https://ollama.com/) models via LangChain.
+and responses are generated with local [Ollama](https://ollama.com/) models via LangChain.  The
+`scripts/` directory includes ingestion helpers for both Markdown (`ingest.py`) and AsciiDoc
+(`ingest_adoc.py`) sources so you can rebuild the knowledge base from your own documentation sets.
 
 The former FastAPI wrapper has been replaced with a Telegram bot entry point in
 `main.py`.  The bot is the primary interface on both desktop and mobile clients,
@@ -97,7 +99,7 @@ up any web framework components.
 ## Project structure
 ```
 .
-├── data/                # Source documentation used to build the vector store
+├── data/                # User-supplied source docs; create/provide before running ingest scripts
 ├── db_metadata_v5/      # Persisted Chroma database files
 ├── main.py              # Telegram bot entry point for the RAG provider
 ├── models/              # Data models shared across the project
@@ -110,7 +112,8 @@ up any web framework components.
 - The Ollama-backed RAG provider is loaded lazily.  If the required LangChain
   modules are not installed, automated tests can still run by mocking the
   provider.
-- Use `scripts/ingest.py` to rebuild the vector store whenever new documentation
-  is added to `data/`.  The script targets that directory by default, but you
-  can pass `--data-path /path/to/markdown` to ingest another folder when
-  needed.
+- Use `scripts/ingest.py` (Markdown) or `scripts/ingest_adoc.py` (AsciiDoc) to
+  rebuild the vector store whenever new documentation needs to be indexed.  Both
+  scripts look for content in `../data` by default; ensure that directory exists
+  or provide an alternative with `--data-path /path/to/sources` before running
+  them.
