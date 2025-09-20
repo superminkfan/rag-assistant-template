@@ -1,9 +1,12 @@
+import os
 from typing import Dict, List
 
 from models.index import ChatMessage
 
 
 CHROMA_PATH = "./db_metadata_v5"
+SIMILARITY_K_ENV_VAR = "OLLAMA_SIMILARITY_K"
+DEFAULT_SIMILARITY_K = 3
 
 _db = None
 _document_chain = None
@@ -69,9 +72,11 @@ def query_rag(message: ChatMessage, session_id: str = "") -> str:
     if session_id not in chat_history:
         chat_history[session_id] = []
 
+    similarity_k = _resolve_similarity_k()
+
     response_text = _document_chain.invoke(
         {
-            "context": _db.similarity_search(message.question, k=3),
+            "context": _db.similarity_search(message.question, k=similarity_k),
             "question": message.question,
             "chat_history": chat_history[session_id],
         }
@@ -81,3 +86,18 @@ def query_rag(message: ChatMessage, session_id: str = "") -> str:
     chat_history[session_id].append(_ai_message_cls(content=response_text))
 
     return response_text
+
+
+def _resolve_similarity_k() -> int:
+    """Resolve the number of documents to return from the similarity search."""
+
+    raw_value = os.getenv(SIMILARITY_K_ENV_VAR)
+    if raw_value is None:
+        return DEFAULT_SIMILARITY_K
+
+    try:
+        parsed_value = int(raw_value)
+    except (TypeError, ValueError):
+        return DEFAULT_SIMILARITY_K
+
+    return parsed_value if parsed_value > 0 else DEFAULT_SIMILARITY_K

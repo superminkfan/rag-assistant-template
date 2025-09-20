@@ -58,12 +58,13 @@ def _configure_stubbed_rag(monkeypatch):
 def test_query_rag_initializes_and_records_history(monkeypatch):
     ensure_calls, db, chain = _configure_stubbed_rag(monkeypatch)
     monkeypatch.setattr(ollama, "chat_history", {})
+    monkeypatch.setenv(ollama.SIMILARITY_K_ENV_VAR, "4")
 
     response = ollama.query_rag(ChatMessage(question="Hello"), session_id="thread-1")
 
     assert ensure_calls["count"] == 1
     assert response == "answer:Hello"
-    assert db.queries == [("Hello", 3)]
+    assert db.queries == [("Hello", 4)]
 
     history = ollama.chat_history["thread-1"]
     assert chain.calls[0]["chat_history"] is history
@@ -78,12 +79,13 @@ def test_query_rag_reuses_existing_history(monkeypatch):
     ensure_calls, db, chain = _configure_stubbed_rag(monkeypatch)
     existing_history = [DummyHuman("prev question"), DummyAI("prev answer")]
     monkeypatch.setattr(ollama, "chat_history", {"thread-2": existing_history})
+    monkeypatch.setenv(ollama.SIMILARITY_K_ENV_VAR, "2")
 
     response = ollama.query_rag(ChatMessage(question="Follow up"), session_id="thread-2")
 
     assert ensure_calls["count"] == 1
     assert response == "answer:Follow up"
-    assert db.queries == [("Follow up", 3)]
+    assert db.queries == [("Follow up", 2)]
 
     assert chain.calls[0]["chat_history"] is existing_history
     assert existing_history[-2].content == "Follow up"
