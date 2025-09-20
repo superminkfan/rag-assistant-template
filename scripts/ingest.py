@@ -15,7 +15,7 @@ from langchain_ollama import OllamaEmbeddings
 # Paths resolved relative to this file so the script works from any cwd
 BASE_DIR = Path(__file__).resolve().parent
 CHROMA_PATH = str((BASE_DIR / "../db_metadata_v5").resolve())
-DATA_PATH = str((BASE_DIR / "../docs").resolve())
+DEFAULT_DATA_PATH = (BASE_DIR / "../data").resolve()
 global_unique_hashes = set()
 
 
@@ -26,14 +26,14 @@ def walk_through_files(path, file_extension='.md'):
                 yield os.path.join(dir_path, filename)
 
 
-def load_documents():
+def load_documents(data_path: Path):
     """
     Load documents from the specified directory
     Returns:
     List of Document objects:
     """
     documents = []
-    for f_name in walk_through_files(DATA_PATH):
+    for f_name in walk_through_files(str(data_path)):
         document_loader = TextLoader(f_name, encoding="utf-8")
         documents.extend(document_loader.load())
 
@@ -107,7 +107,7 @@ def save_to_chroma(chunks: list[Document]):
     print(f"Saved {len(chunks)} chunks to {CHROMA_PATH}.")
 
 
-def generate_data_store(chunk_size: int, chunk_overlap: int):
+def generate_data_store(chunk_size: int, chunk_overlap: int, data_path: Path):
     """
     Function to generate a Chroma vector database from documents using the provided chunk settings.
 
@@ -115,7 +115,7 @@ def generate_data_store(chunk_size: int, chunk_overlap: int):
         chunk_size (int): Maximum number of characters allowed in a chunk.
         chunk_overlap (int): Number of characters to overlap between chunks.
     """
-    documents = load_documents()  # Load documents from a source
+    documents = load_documents(data_path)  # Load documents from a source
     chunks = split_text(documents, chunk_size, chunk_overlap)  # Split documents into manageable chunks
     save_to_chroma(chunks)  # Save the processed data to a data store
 
@@ -134,6 +134,12 @@ if __name__ == "__main__":
         default=100,
         help="Number of overlapping characters between chunks (default: 100)",
     )
+    parser.add_argument(
+        "--data-path",
+        type=Path,
+        default=DEFAULT_DATA_PATH,
+        help="Directory containing markdown documents to ingest (default: ../data)",
+    )
 
     args = parser.parse_args()
 
@@ -144,4 +150,10 @@ if __name__ == "__main__":
     if args.chunk_overlap >= args.chunk_size:
         parser.error("--chunk-overlap must be smaller than --chunk-size")
 
-    generate_data_store(args.chunk_size, args.chunk_overlap)
+    data_path = args.data_path.resolve()
+    if not data_path.exists():
+        parser.error(f"--data-path {data_path} does not exist")
+    if not data_path.is_dir():
+        parser.error(f"--data-path {data_path} is not a directory")
+
+    generate_data_store(args.chunk_size, args.chunk_overlap, data_path)
