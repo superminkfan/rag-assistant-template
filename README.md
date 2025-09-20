@@ -1,12 +1,12 @@
-# RAG Project from DataGrid Docs
+# RAG Assistant Template
 
 ## Overview
-This repository contains utilities for querying a Retrieval-Augmented Generation (RAG) pipeline that was built from DataGrid
-product documentation.  Documents are stored in a persistent
-[Chroma](https://www.trychroma.com/) vector database (bundled in `db_metadata_v5/`),
-and responses are generated with local [Ollama](https://ollama.com/) models via LangChain.  The
-`scripts/` directory includes ingestion helpers for both Markdown (`ingest.py`) and AsciiDoc
-(`ingest_adoc.py`) sources so you can rebuild the knowledge base from your own documentation sets.
+This repository provides a flexible Retrieval-Augmented Generation (RAG) assistant that can be
+powered by any documentation set you load into the bundled vector store.  Documents are stored in a
+persistent [Chroma](https://www.trychroma.com/) database (`db_metadata_v5/`), and responses are
+generated with local [Ollama](https://ollama.com/) models via LangChain.  The `scripts/` directory
+includes ingestion helpers for both Markdown (`ingest.py`) and AsciiDoc (`ingest_adoc.py`) sources so
+you can rebuild the knowledge base from your own materials.
 
 The former FastAPI wrapper has been replaced with a Telegram bot entry point in
 `main.py`.  The bot is the primary interface on both desktop and mobile clients,
@@ -25,8 +25,8 @@ needed.
 ## Installation
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/<your-org>/ragProjectFromDataGridDocs.git
-   cd ragProjectFromDataGridDocs
+   git clone https://github.com/<your-org>/rag-assistant-template.git
+   cd rag-assistant-template
    ```
 2. **Create and activate a virtual environment** (optional but recommended)
    ```bash
