@@ -39,7 +39,7 @@ def load_documents(data_path: Path):
     """
     documents = []
     for f_name in walk_through_files(str(data_path)):
-        # TextLoader безопасно читает и .adoc, и .md
+        # TextLoader safely reads both .adoc and .md files
         document_loader = TextLoader(f_name, encoding="utf-8")
         documents.extend(document_loader.load())
     return documents
@@ -54,34 +54,34 @@ def split_text(documents: list[Document], chunk_size: int, chunk_overlap: int):
     """
     Split text into chunks with AsciiDoc-aware separators to avoid breaking code blocks and tables.
 
-    Priorities (от более крупных к более мелким):
-      - Заголовки AsciiDoc (=, ==, ===, …)
-      - Границы таблиц |=== ... |===
-      - Блоки кода [source]\n---- ... ---- и листинги .... ... ....
-      - Абзацы
-      - Списки
-      - Строки, слова, символы
+    Priorities (from largest to smallest granularity):
+      - AsciiDoc headings (=, ==, ===, …)
+      - Table boundaries |=== ... |===
+      - Code blocks [source]\n---- ... ---- and listing blocks .... ... ....
+      - Paragraphs
+      - Lists
+      - Lines, words, characters
     """
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
         length_function=len,
-        # порядок важен: первые элементы — самые желанные места разреза
+        # Order matters: earlier separators are preferred split positions
         separators=[
-            "\n= ", "\n== ", "\n=== ", "\n==== ", "\n===== ",  # заголовки AsciiDoc
-            "\n|===\n",                                        # граница таблиц AsciiDoc
-            "\n[source",                                       # начало блока с атрибутами [source,java] и т.п.
-            "\n----\n",                                        # ограждение кода AsciiDoc
-            "\n....\n",                                        # листинговые блоки AsciiDoc
-            "\n\n====\n\n",                                    # разделители секций (иногда встречаются)
-            "\n\n***\n\n", "\n\n---\n\n", "\n\n____\n\n",      # горизонтальные/блочные правила
-            "\n\n",                                            # абзацы
-            "\n* ", "\n- ", "\n. ",                            # списки/нумерация
-            "\n",                                              # строки
-            " ",                                               # слова
-            "",                                                # символы
+            "\n= ", "\n== ", "\n=== ", "\n==== ", "\n===== ",  # AsciiDoc headings
+            "\n|===\n",                                        # AsciiDoc table boundaries
+            "\n[source",                                       # Start of a block with [source,java] attributes, etc.
+            "\n----\n",                                        # AsciiDoc code fences
+            "\n....\n",                                        # AsciiDoc listing blocks
+            "\n\n====\n\n",                                    # Section delimiters (occasionally used)
+            "\n\n***\n\n", "\n\n---\n\n", "\n\n____\n\n",      # Horizontal or block rules
+            "\n\n",                                            # Paragraphs
+            "\n* ", "\n- ", "\n. ",                            # Lists or numbered items
+            "\n",                                              # Lines
+            " ",                                               # Words
+            "",                                                # Characters
         ],
-        # Бережнее к whitespace: не выпиливаем его, чтобы не терять структуру таблиц/листингов
+        # Preserve whitespace to keep table and listing structure intact
         keep_separator=False,
         strip_whitespace=False,
     )
@@ -92,7 +92,7 @@ def split_text(documents: list[Document], chunk_size: int, chunk_overlap: int):
     # Deduplicate by content hash
     unique_chunks = []
     for chunk in chunks:
-        # Опционально можно слегка нормализовать пробелы в конце-начале:
+        # Optional place to normalize leading or trailing whitespace if needed
         content = chunk.page_content
         chunk_hash = hash_text(content)
         if chunk_hash not in global_unique_hashes:
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--chunk-size",
         type=int,
-        default=1200,  # слегка увеличил дефолт для объёмных таблиц/кода
+        default=1200,  # Slightly higher default to accommodate large tables/code blocks
         help="Maximum number of characters in each chunk (default: 1200)",
     )
     parser.add_argument(
@@ -175,9 +175,9 @@ if __name__ == "__main__":
     if not data_path.is_dir():
         parser.error(f"--data-path {data_path} is not a directory")
 
-    # Настроим расширения под задачу
+    # Configure file extensions for the ingestion task
     if args.only_adoc:
-        # Перепривяжем генератор файлов к .adoc только
+        # Override the file generator to target only .adoc files
         def walk_only_adoc(path):
             yield from walk_through_files(path, file_extensions=(".adoc",))
         walk_through_files = walk_only_adoc  # type: ignore
