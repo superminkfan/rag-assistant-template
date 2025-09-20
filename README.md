@@ -111,4 +111,6 @@ up any web framework components.
   modules are not installed, automated tests can still run by mocking the
   provider.
 - Use `scripts/ingest.py` to rebuild the vector store whenever new documentation
-  is added to `data/`.
+  is added to `data/`.  The script targets that directory by default, but you
+  can pass `--data-path /path/to/markdown` to ingest another folder when
+  needed.
