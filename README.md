@@ -74,9 +74,16 @@ Follow these steps to run the Telegram bot:
 ## Configuration
 - `db_metadata_v5/` – directory that stores the persistent Chroma database.
   Replace or rebuild it with your own knowledge base if required.
-- `OLLAMA_TEMPERATURE` – optional environment variable that adjusts the
-  sampling temperature supplied to the local Ollama model.  If unset the
-  provider defaults to `0.1`, which keeps answers focused and deterministic.
+- **Environment variables** – tune the RAG provider without touching code:
+  - `OLLAMA_TEMPERATURE` – optional control for the sampling temperature
+    supplied to the local Ollama model.  If unset the provider defaults to
+    `0.1`, which keeps answers focused and deterministic.
+  - `OLLAMA_SIMILARITY_K` – sets how many documents are returned from the
+    similarity search per question.  Leaving it unset keeps the default value
+    of `3`, which balances recall with concise context windows.
+  - `OLLAMA_CHAT_HISTORY_WINDOW` – caps how many past chat messages (human and
+    AI) are retained per conversation.  The default is `20`, ensuring recent
+    context is preserved while old exchanges are trimmed automatically.
 
 ## Running tests
 The project uses [pytest](https://docs.pytest.org/) for automated testing.
