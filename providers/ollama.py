@@ -1,9 +1,12 @@
+import os
 from typing import Dict, List
 
 from models.index import ChatMessage
 
 
 CHROMA_PATH = "./db_metadata_v5"
+OLLAMA_TEMPERATURE_ENV = "OLLAMA_TEMPERATURE"
+DEFAULT_TEMPERATURE = 0.1
 
 _db = None
 _document_chain = None
@@ -26,7 +29,8 @@ def _ensure_initialized() -> None:
     from langchain_ollama import OllamaEmbeddings, OllamaLLM
     from langchain.chains.combine_documents import create_stuff_documents_chain
 
-    model = OllamaLLM(model="llama3.2:latest", temperature=0.1)
+    temperature = _get_configured_temperature()
+    model = OllamaLLM(model="llama3.2:latest", temperature=temperature)
     embedding_function = OllamaEmbeddings(model="mxbai-embed-large")
 
     _db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding_function)
@@ -53,6 +57,21 @@ def _ensure_initialized() -> None:
     _document_chain = create_stuff_documents_chain(llm=model, prompt=prompt_template)
     _human_message_cls = HumanMessage
     _ai_message_cls = AIMessage
+
+
+def _get_configured_temperature() -> float:
+    """Return the Ollama temperature configured via environment settings."""
+
+    raw_value = os.getenv(OLLAMA_TEMPERATURE_ENV)
+    if raw_value is None or raw_value == "":
+        return DEFAULT_TEMPERATURE
+
+    try:
+        return float(raw_value)
+    except ValueError as exc:  # pragma: no cover - defensive programming
+        raise ValueError(
+            f"Invalid temperature '{raw_value}' defined in {OLLAMA_TEMPERATURE_ENV}."
+        ) from exc
 
 
 def query_rag(message: ChatMessage, session_id: str = "") -> str:

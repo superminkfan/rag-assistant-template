@@ -73,6 +73,9 @@ Follow these steps to run the Telegram bot:
 ## Configuration
 - `db_metadata_v5/` – directory that stores the persistent Chroma database.
   Replace or rebuild it with your own knowledge base if required.
+- `OLLAMA_TEMPERATURE` – optional environment variable that adjusts the
+  sampling temperature supplied to the local Ollama model.  If unset the
+  provider defaults to `0.1`, which keeps answers focused and deterministic.
 
 ## Running tests
 The project uses [pytest](https://docs.pytest.org/) for automated testing.

@@ -1,4 +1,5 @@
 import sys
+import types
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -55,6 +56,82 @@ def _configure_stubbed_rag(monkeypatch):
     return ensure_calls, db, chain
 
 
+def _install_llm_dependencies(monkeypatch, temperature_capture):
+    module = types.ModuleType("langchain_ollama")
+
+    class DummyLLM:
+        def __init__(self, model: str, temperature: float):
+            temperature_capture.append((model, temperature))
+
+    class DummyEmbeddings:
+        def __init__(self, model: str):
+            self.model = model
+
+    module.OllamaLLM = DummyLLM
+    module.OllamaEmbeddings = DummyEmbeddings
+    monkeypatch.setitem(sys.modules, "langchain_ollama", module)
+
+    chroma_module = types.ModuleType("langchain_chroma")
+
+    class DummyChroma:
+        def __init__(self, persist_directory, embedding_function):
+            self.persist_directory = persist_directory
+            self.embedding_function = embedding_function
+
+        def similarity_search(self, *_args, **_kwargs):
+            return []
+
+    chroma_module.Chroma = DummyChroma
+    monkeypatch.setitem(sys.modules, "langchain_chroma", chroma_module)
+
+    messages_module = types.ModuleType("langchain_core.messages")
+
+    class DummyHumanMessage:
+        def __init__(self, content: str):
+            self.content = content
+
+    class DummyAIMessage(DummyHumanMessage):
+        pass
+
+    messages_module.HumanMessage = DummyHumanMessage
+    messages_module.AIMessage = DummyAIMessage
+    monkeypatch.setitem(sys.modules, "langchain_core.messages", messages_module)
+
+    prompts_module = types.ModuleType("langchain_core.prompts")
+
+    class DummyPromptTemplate:
+        def __init__(self, messages):
+            self.messages = messages
+
+        @classmethod
+        def from_messages(cls, messages):
+            return cls(messages)
+
+    class DummyMessagesPlaceholder:
+        def __init__(self, variable_name: str):
+            self.variable_name = variable_name
+
+    prompts_module.ChatPromptTemplate = DummyPromptTemplate
+    prompts_module.MessagesPlaceholder = DummyMessagesPlaceholder
+    monkeypatch.setitem(sys.modules, "langchain_core.prompts", prompts_module)
+
+    chains_module = types.ModuleType("langchain.chains.combine_documents")
+
+    class DummyChain:
+        def __init__(self, llm, prompt):
+            self.llm = llm
+            self.prompt = prompt
+
+        def invoke(self, *_args, **_kwargs):
+            return ""
+
+    def factory(llm, prompt):
+        return DummyChain(llm=llm, prompt=prompt)
+
+    chains_module.create_stuff_documents_chain = factory
+    monkeypatch.setitem(sys.modules, "langchain.chains.combine_documents", chains_module)
+
+
 def test_query_rag_initializes_and_records_history(monkeypatch):
     ensure_calls, db, chain = _configure_stubbed_rag(monkeypatch)
     monkeypatch.setattr(ollama, "chat_history", {})
@@ -89,3 +166,27 @@ def test_query_rag_reuses_existing_history(monkeypatch):
     assert existing_history[-2].content == "Follow up"
     assert existing_history[-1].content == "answer:Follow up"
     assert len(existing_history) == 4
+
+
+def test_ensure_initialized_uses_configured_temperature(monkeypatch):
+    captured_temps = []
+    _install_llm_dependencies(monkeypatch, captured_temps)
+
+    monkeypatch.setattr(ollama, "_db", None)
+    monkeypatch.setattr(ollama, "_document_chain", None)
+    monkeypatch.setattr(ollama, "_human_message_cls", None)
+    monkeypatch.setattr(ollama, "_ai_message_cls", None)
+
+    monkeypatch.delenv(ollama.OLLAMA_TEMPERATURE_ENV, raising=False)
+    ollama._ensure_initialized()
+    assert captured_temps[-1][1] == ollama.DEFAULT_TEMPERATURE
+
+    monkeypatch.setattr(ollama, "_db", None)
+    monkeypatch.setattr(ollama, "_document_chain", None)
+    monkeypatch.setattr(ollama, "_human_message_cls", None)
+    monkeypatch.setattr(ollama, "_ai_message_cls", None)
+
+    captured_temps.clear()
+    monkeypatch.setenv(ollama.OLLAMA_TEMPERATURE_ENV, "0.42")
+    ollama._ensure_initialized()
+    assert captured_temps[-1] == ("llama3.2:latest", 0.42)
