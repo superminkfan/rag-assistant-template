@@ -14,6 +14,26 @@ _human_message_cls = None
 _ai_message_cls = None
 chat_history: Dict[str, List[object]] = {}
 
+DEFAULT_CHAT_HISTORY_WINDOW = 20
+
+
+def _configured_history_window() -> int:
+    """Resolve the chat history window size from the environment."""
+
+    value = os.getenv("OLLAMA_CHAT_HISTORY_WINDOW")
+    if not value:
+        return DEFAULT_CHAT_HISTORY_WINDOW
+
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return DEFAULT_CHAT_HISTORY_WINDOW
+
+    return parsed if parsed > 0 else DEFAULT_CHAT_HISTORY_WINDOW
+
+
+CHAT_HISTORY_WINDOW = _configured_history_window()
+
 
 def _ensure_initialized() -> None:
     """Lazily initialize heavy RAG dependencies."""
@@ -74,6 +94,8 @@ def query_rag(message: ChatMessage, session_id: str = "") -> str:
     if session_id not in chat_history:
         chat_history[session_id] = []
 
+    history = chat_history[session_id]
+
     similarity_k = _resolve_similarity_k()
   
     context_documents = _db.similarity_search(message.question, k=similarity_k)
@@ -85,16 +107,43 @@ def query_rag(message: ChatMessage, session_id: str = "") -> str:
         {
             "context": context_documents,
             "question": message.question,
-            "chat_history": chat_history[session_id],
+            "chat_history": history,
         }
     )
 
-    chat_history[session_id].append(_human_message_cls(content=message.question))
-    chat_history[session_id].append(_ai_message_cls(content=response_text))
+    history.append(_human_message_cls(content=message.question))
+    history.append(_ai_message_cls(content=response_text))
+
+    _trim_history_window(history)
 
     return response_text
 
+  
+def _trim_history_window(history: List[object]) -> None:
+    """Trim the history list in-place to respect the configured window size."""
 
+    window = CHAT_HISTORY_WINDOW
+    if window <= 0:
+        return
+
+    length = len(history)
+    if length <= window:
+        return
+
+    # Remove the oldest messages while keeping the ordering and ensuring
+    # at least the most recent exchange (human + AI) remains available.
+    to_remove = length - window
+    if to_remove % 2 != 0:
+        to_remove += 1
+
+    # Always keep at least the most recent human/AI pair when trimming.
+    max_removal = max(0, length - 2)
+    to_remove = min(to_remove, max_removal)
+
+    if to_remove > 0:
+        del history[:to_remove]
+
+        
 def _resolve_similarity_k() -> int:
     """Resolve the number of documents to return from the similarity search."""
 
