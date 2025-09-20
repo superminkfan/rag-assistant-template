@@ -5,6 +5,8 @@ from models.index import ChatMessage
 
 
 CHROMA_PATH = "./db_metadata_v5"
+SIMILARITY_K_ENV_VAR = "OLLAMA_SIMILARITY_K"
+DEFAULT_SIMILARITY_K = 3
 
 _db = None
 _document_chain = None
@@ -61,6 +63,8 @@ def _ensure_initialized() -> None:
                 If the answer is not included in the context, reply exactly “Hmm, I am not sure. Let me check and get back to you.”
                 Decline to answer questions that fall outside the provided information.
                 Ask for clarification whenever a request is unclear.
+                Support statements with bracketed, numbered citations (e.g., [1], [2]) that correspond to the retrieved context snippets.
+                When an answer requires multiple steps, lay them out as an ordered list or clearly labeled sequence of steps.
                 Keep responses concise, objective, and formatted in Markdown when helpful.[/INST]
                 [INST]Answer the question based only on the following context:
                 {context}[/INST]
@@ -92,9 +96,16 @@ def query_rag(message: ChatMessage, session_id: str = "") -> str:
 
     history = chat_history[session_id]
 
+    similarity_k = _resolve_similarity_k()
+  
+    context_documents = _db.similarity_search(message.question, k=similarity_k)
+
+    if not context_documents:
+        return "Hmm, I am not sure. Let me check and get back to you."
+      
     response_text = _document_chain.invoke(
         {
-            "context": _db.similarity_search(message.question, k=3),
+            "context": context_documents,
             "question": message.question,
             "chat_history": history,
         }
@@ -107,7 +118,7 @@ def query_rag(message: ChatMessage, session_id: str = "") -> str:
 
     return response_text
 
-
+  
 def _trim_history_window(history: List[object]) -> None:
     """Trim the history list in-place to respect the configured window size."""
 
@@ -131,3 +142,18 @@ def _trim_history_window(history: List[object]) -> None:
 
     if to_remove > 0:
         del history[:to_remove]
+
+        
+def _resolve_similarity_k() -> int:
+    """Resolve the number of documents to return from the similarity search."""
+
+    raw_value = os.getenv(SIMILARITY_K_ENV_VAR)
+    if raw_value is None:
+        return DEFAULT_SIMILARITY_K
+
+    try:
+        parsed_value = int(raw_value)
+    except (TypeError, ValueError):
+        return DEFAULT_SIMILARITY_K
+
+    return parsed_value if parsed_value > 0 else DEFAULT_SIMILARITY_K
