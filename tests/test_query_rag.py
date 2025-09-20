@@ -58,6 +58,7 @@ def _configure_stubbed_rag(monkeypatch):
 def test_query_rag_initializes_and_records_history(monkeypatch):
     ensure_calls, db, chain = _configure_stubbed_rag(monkeypatch)
     monkeypatch.setattr(ollama, "chat_history", {})
+    monkeypatch.setattr(ollama, "CHAT_HISTORY_WINDOW", 20)
 
     response = ollama.query_rag(ChatMessage(question="Hello"), session_id="thread-1")
 
@@ -78,6 +79,7 @@ def test_query_rag_reuses_existing_history(monkeypatch):
     ensure_calls, db, chain = _configure_stubbed_rag(monkeypatch)
     existing_history = [DummyHuman("prev question"), DummyAI("prev answer")]
     monkeypatch.setattr(ollama, "chat_history", {"thread-2": existing_history})
+    monkeypatch.setattr(ollama, "CHAT_HISTORY_WINDOW", 20)
 
     response = ollama.query_rag(ChatMessage(question="Follow up"), session_id="thread-2")
 
@@ -89,3 +91,26 @@ def test_query_rag_reuses_existing_history(monkeypatch):
     assert existing_history[-2].content == "Follow up"
     assert existing_history[-1].content == "answer:Follow up"
     assert len(existing_history) == 4
+
+
+def test_query_rag_limits_history_window(monkeypatch):
+    ensure_calls, db, chain = _configure_stubbed_rag(monkeypatch)
+    monkeypatch.setattr(ollama, "chat_history", {})
+    monkeypatch.setattr(ollama, "CHAT_HISTORY_WINDOW", 4)
+
+    session_id = "thread-3"
+    for idx in range(3):
+        response = ollama.query_rag(
+            ChatMessage(question=f"Question {idx}"), session_id=session_id
+        )
+        assert response == f"answer:Question {idx}"
+
+    history = ollama.chat_history[session_id]
+    assert chain.calls[-1]["chat_history"] is history
+    assert len(history) == 4
+    assert [message.content for message in history] == [
+        "Question 1",
+        "answer:Question 1",
+        "Question 2",
+        "answer:Question 2",
+    ]
