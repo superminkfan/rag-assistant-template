@@ -30,7 +30,9 @@ def walk_through_files(path, file_extensions=(".adoc", ".md")):
                 yield os.path.join(dir_path, filename)
 
 
-def load_documents(data_path: Path):
+def load_documents(
+    data_path: Path, file_extensions: tuple[str, ...] | None = None
+):
     """
     Load documents from the specified directory.
 
@@ -38,7 +40,8 @@ def load_documents(data_path: Path):
         List[Document]
     """
     documents = []
-    for f_name in walk_through_files(str(data_path)):
+    extensions = file_extensions or (".adoc", ".md")
+    for f_name in walk_through_files(str(data_path), file_extensions=extensions):
         # TextLoader safely reads both .adoc and .md files
         document_loader = TextLoader(f_name, encoding="utf-8")
         documents.extend(document_loader.load())
@@ -123,11 +126,16 @@ def save_to_chroma(chunks: list[Document]):
     print(f"Saved {len(chunks)} chunks to {CHROMA_PATH}.")
 
 
-def generate_data_store(chunk_size: int, chunk_overlap: int, data_path: Path):
+def generate_data_store(
+    chunk_size: int,
+    chunk_overlap: int,
+    data_path: Path,
+    file_extensions: tuple[str, ...] | None = None,
+):
     """
     Build a Chroma vector DB from AsciiDoc/Markdown documents with AsciiDoc-aware splitting.
     """
-    documents = load_documents(data_path)
+    documents = load_documents(data_path, file_extensions=file_extensions)
     chunks = split_text(documents, chunk_size, chunk_overlap)
     save_to_chroma(chunks)
 
@@ -175,11 +183,13 @@ if __name__ == "__main__":
     if not data_path.is_dir():
         parser.error(f"--data-path {data_path} is not a directory")
 
-    # Configure file extensions for the ingestion task
+    file_extensions: tuple[str, ...] | None = None
     if args.only_adoc:
-        # Override the file generator to target only .adoc files
-        def walk_only_adoc(path):
-            yield from walk_through_files(path, file_extensions=(".adoc",))
-        walk_through_files = walk_only_adoc  # type: ignore
+        file_extensions = (".adoc",)
 
-    generate_data_store(args.chunk_size, args.chunk_overlap, data_path)
+    generate_data_store(
+        args.chunk_size,
+        args.chunk_overlap,
+        data_path,
+        file_extensions=file_extensions,
+    )
