@@ -17,7 +17,7 @@ needed.
   `mxbai-embed-large` models installed.
 - The dependencies listed below (they can be installed into a virtual environment):
   ```bash
-  pip install langchain langchain-community langchain-chroma langchain-ollama pytest
+  pip install langchain langchain-community langchain-chroma langchain-ollama python-telegram-bot pytest
   ```
 
 ## Installation
@@ -36,7 +36,8 @@ needed.
    pip install -r requirements.txt
    ```
    If you prefer not to use `requirements.txt`, install the packages listed in the
-   [Requirements](#requirements) section manually.
+   [Requirements](#requirements) section manually (including
+   `python-telegram-bot`).
 
 ## Usage
 Follow these steps to run the Telegram bot:
