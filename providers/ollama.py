@@ -43,6 +43,8 @@ def _ensure_initialized() -> None:
                 If the answer is not included in the context, reply exactly “Hmm, I am not sure. Let me check and get back to you.”
                 Decline to answer questions that fall outside the provided information.
                 Ask for clarification whenever a request is unclear.
+                Support statements with bracketed, numbered citations (e.g., [1], [2]) that correspond to the retrieved context snippets.
+                When an answer requires multiple steps, lay them out as an ordered list or clearly labeled sequence of steps.
                 Keep responses concise, objective, and formatted in Markdown when helpful.[/INST]
                 [INST]Answer the question based only on the following context:
                 {context}[/INST]
