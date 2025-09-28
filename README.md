@@ -5,8 +5,8 @@ This repository provides a flexible Retrieval-Augmented Generation (RAG) assista
 powered by any documentation set you load into the bundled vector store.  Documents are stored in a
 persistent [Chroma](https://www.trychroma.com/) database (`db_metadata_v5/`), and responses are
 generated with local [Ollama](https://ollama.com/) models via LangChain.  The `scripts/` directory
-includes ingestion helpers for both Markdown (`ingest.py`) and AsciiDoc (`ingest_adoc.py`) sources so
-you can rebuild the knowledge base from your own materials.
+includes ingestion helpers for Markdown (`ingest.py`), AsciiDoc (`ingest_adoc.py`), and Java source
+Javadoc (`ingest_javadoc.py`) so you can rebuild the knowledge base from your own materials.
 
 The former FastAPI wrapper has been replaced with a Telegram bot entry point in
 `main.py`.  The bot is the primary interface on both desktop and mobile clients,
@@ -112,8 +112,9 @@ up any web framework components.
 - The Ollama-backed RAG provider is loaded lazily.  If the required LangChain
   modules are not installed, automated tests can still run by mocking the
   provider.
-- Use `scripts/ingest.py` (Markdown) or `scripts/ingest_adoc.py` (AsciiDoc) to
-  rebuild the vector store whenever new documentation needs to be indexed.  Both
+- Use `scripts/ingest.py` (Markdown), `scripts/ingest_adoc.py` (AsciiDoc), or
+  `scripts/ingest_javadoc.py` (Javadoc comments extracted from `.java` files) to
+  rebuild the vector store whenever new documentation needs to be indexed.  All
   scripts look for content in `../data` by default; ensure that directory exists
   or provide an alternative with `--data-path /path/to/sources` before running
   them.
