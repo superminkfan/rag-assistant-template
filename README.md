@@ -117,4 +117,21 @@ up any web framework components.
   rebuild the vector store whenever new documentation needs to be indexed.  All
   scripts look for content in `../data` by default; ensure that directory exists
   or provide an alternative with `--data-path /path/to/sources` before running
-  them.
+  them.  Each script accepts an optional `--reset` flag to delete the existing
+  Chroma database before ingesting.
+
+### Building a combined vector store
+
+The AsciiDoc and Javadoc ingestion scripts append to the same Chroma
+database, enabling you to build a single knowledge base that mixes both
+document types.  A typical workflow looks like this:
+
+```bash
+python scripts/ingest_adoc.py --data-path ./data/docs --reset  # start fresh
+python scripts/ingest_javadoc.py --data-path ./data/java        # append Javadoc chunks
+```
+
+After the initial `--reset` run, rerunning either script without the flag will
+add new chunks without erasing previously stored content.  This makes it safe to
+ingest updated materials incrementally while keeping the shared vector store in
+sync.

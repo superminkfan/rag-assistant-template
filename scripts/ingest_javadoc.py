@@ -123,22 +123,33 @@ def split_documents(
     return unique_chunks
 
 
-def save_to_chroma(chunks: list[Document]) -> None:
+def save_to_chroma(chunks: list[Document], reset: bool = False) -> None:
     """Persist chunks to Chroma with Ollama embeddings."""
 
-    if os.path.exists(CHROMA_PATH):
+    embeddings = OllamaEmbeddings(model="mxbai-embed-large")
+
+    if reset and os.path.exists(CHROMA_PATH):
         shutil.rmtree(CHROMA_PATH)
 
-    db = Chroma.from_documents(
-        documents=chunks,
-        embedding=OllamaEmbeddings(model="mxbai-embed-large"),
-        persist_directory=CHROMA_PATH,
-    )
+    if os.path.exists(CHROMA_PATH):
+        db = Chroma(
+            persist_directory=CHROMA_PATH,
+            embedding_function=embeddings,
+        )
+        db.add_documents(chunks)
+    else:
+        db = Chroma.from_documents(
+            documents=chunks,
+            embedding=embeddings,
+            persist_directory=CHROMA_PATH,
+        )
     db.persist()
     print(f"Saved {len(chunks)} chunks to {CHROMA_PATH}.")
 
 
-def generate_data_store(base_path: Path, chunk_size: int, chunk_overlap: int) -> None:
+def generate_data_store(
+    base_path: Path, chunk_size: int, chunk_overlap: int, reset: bool = False
+) -> None:
     """Extract, split, and store Javadoc comments."""
 
     documents = load_javadoc_documents(base_path)
@@ -147,7 +158,7 @@ def generate_data_store(base_path: Path, chunk_size: int, chunk_overlap: int) ->
         return
 
     chunks = split_documents(documents, chunk_size, chunk_overlap)
-    save_to_chroma(chunks)
+    save_to_chroma(chunks, reset=reset)
 
 
 if __name__ == "__main__":
@@ -171,6 +182,11 @@ if __name__ == "__main__":
         default=DEFAULT_DATA_PATH,
         help="Directory containing Java source files (default: ../data)",
     )
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="If set, delete the existing Chroma database before ingesting.",
+    )
 
     args = parser.parse_args()
 
@@ -187,4 +203,9 @@ if __name__ == "__main__":
     if not data_path.is_dir():
         parser.error(f"--data-path {data_path} is not a directory")
 
-    generate_data_store(data_path, args.chunk_size, args.chunk_overlap)
+    generate_data_store(
+        data_path,
+        args.chunk_size,
+        args.chunk_overlap,
+        reset=args.reset,
+    )
