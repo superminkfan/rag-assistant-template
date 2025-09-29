@@ -106,20 +106,28 @@ def split_text(documents: list[Document], chunk_size: int, chunk_overlap: int):
     return unique_chunks
 
 
-def save_to_chroma(chunks: list[Document]):
+def save_to_chroma(chunks: list[Document], reset: bool = False):
     """
     Save chunks to a Chroma DB with Ollama embeddings.
     """
-    # Clear out the existing database directory if it exists
-    if os.path.exists(CHROMA_PATH):
+    embeddings = OllamaEmbeddings(model="mxbai-embed-large")
+
+    if reset and os.path.exists(CHROMA_PATH):
         shutil.rmtree(CHROMA_PATH)
 
-    # Create a new Chroma database from the documents using local Ollama embeddings
-    db = Chroma.from_documents(
-        documents=chunks,
-        embedding=OllamaEmbeddings(model="mxbai-embed-large"),
-        persist_directory=CHROMA_PATH,
-    )
+    if os.path.exists(CHROMA_PATH):
+        db = Chroma(
+            persist_directory=CHROMA_PATH,
+            embedding_function=embeddings,
+        )
+        db.add_documents(chunks)
+    else:
+        # Create a new Chroma database from the documents using local Ollama embeddings
+        db = Chroma.from_documents(
+            documents=chunks,
+            embedding=embeddings,
+            persist_directory=CHROMA_PATH,
+        )
 
     # Persist the database to disk
     db.persist()
@@ -131,13 +139,14 @@ def generate_data_store(
     chunk_overlap: int,
     data_path: Path,
     file_extensions: tuple[str, ...] | None = None,
+    reset: bool = False,
 ):
     """
     Build a Chroma vector DB from AsciiDoc/Markdown documents with AsciiDoc-aware splitting.
     """
     documents = load_documents(data_path, file_extensions=file_extensions)
     chunks = split_text(documents, chunk_size, chunk_overlap)
-    save_to_chroma(chunks)
+    save_to_chroma(chunks, reset=reset)
 
 
 if __name__ == "__main__":
@@ -167,6 +176,11 @@ if __name__ == "__main__":
         action="store_true",
         help="If set, only ingest .adoc files (ignore .md).",
     )
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="If set, delete the existing Chroma database before ingesting.",
+    )
 
     args = parser.parse_args()
 
@@ -192,4 +206,5 @@ if __name__ == "__main__":
         args.chunk_overlap,
         data_path,
         file_extensions=file_extensions,
+        reset=args.reset,
     )
