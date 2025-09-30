@@ -152,7 +152,11 @@ def build_application(token: str) -> Application:
 def main() -> None:
     """Run the Telegram bot backed by the Ollama RAG pipeline."""
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
     token = os.getenv("TELEGRAM_TOKEN")
     if not token:
