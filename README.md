@@ -86,6 +86,13 @@ Follow these steps to run the Telegram bot:
   - `OLLAMA_CHAT_HISTORY_WINDOW` – caps how many past chat messages (human and
     AI) are retained per conversation.  The default is `20`, ensuring recent
     context is preserved while old exchanges are trimmed automatically.
+  - `OLLAMA_TIMEOUT` – optional cap, in seconds, on how long the provider waits
+    for a response from Ollama.  Set it to any positive value to enforce a
+    timeout; leave the variable unset to wait indefinitely.  For example:
+    ```bash
+    export OLLAMA_TIMEOUT=60  # Wait at most 60 seconds before giving up
+    python main.py
+    ```
 
 ## Running tests
 The project uses [pytest](https://docs.pytest.org/) for automated testing.
