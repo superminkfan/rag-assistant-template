@@ -105,6 +105,15 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     chat_id = update.effective_chat.id if update.effective_chat else None
 
+    def _truncate(value: Optional[str], limit: int = 200) -> str:
+        if value is None:
+            return ""
+        if len(value) <= limit:
+            return value
+        return value[: limit - 1] + "\u2026"
+
+    LOGGER.info("Received message in chat %s: %s", chat_id, _truncate(text))
+
     try:
         if chat_id is not None and ChatActionSender is not None:
             async with ChatActionSender(
@@ -118,6 +127,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             else:
                 session_id = ""
             response_text = ollama.query_rag(ChatMessage(question=text), session_id)
+        LOGGER.info("Assistant response for chat %s: %s", chat_id, _truncate(response_text))
     except Exception:  # pragma: no cover - defensive logging
         LOGGER.exception("Failed to query RAG backend for chat %s", chat_id)
         await update.message.reply_text(
