@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import subprocess
@@ -27,6 +28,35 @@ from models.index import ChatMessage
 from providers import ollama
 
 LOGGER = logging.getLogger(__name__)
+
+OLLAMA_TIMEOUT_ENV = "OLLAMA_TIMEOUT"
+
+
+def _get_ollama_timeout() -> Optional[float]:
+    """Return the configured timeout for Ollama requests, if any."""
+
+    raw_value = os.getenv(OLLAMA_TIMEOUT_ENV)
+    if not raw_value:
+        return None
+    try:
+        timeout = float(raw_value)
+    except ValueError:
+        LOGGER.warning("Invalid OLLAMA_TIMEOUT '%s'; ignoring.", raw_value)
+        return None
+    if timeout <= 0:
+        LOGGER.warning("OLLAMA_TIMEOUT must be positive; ignoring '%s'.", raw_value)
+        return None
+    return timeout
+
+
+async def _query_rag_with_timeout(message: ChatMessage, session_id: str) -> str:
+    """Run the blocking RAG query off the event loop honoring the configured timeout."""
+
+    timeout = _get_ollama_timeout()
+    coroutine = asyncio.to_thread(ollama.query_rag, message, session_id)
+    if timeout is not None:
+        return await asyncio.wait_for(coroutine, timeout=timeout)
+    return await coroutine
 
 
 def chunk_response(text: str, limit: int = int(MessageLimit.MAX_TEXT_LENGTH)) -> list[str]:
@@ -114,20 +144,26 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     LOGGER.info("Received message in chat %s: %s", chat_id, _truncate(text))
 
+    session_id = str(chat_id) if chat_id is not None else ""
+    message_payload = ChatMessage(question=text)
+
     try:
         if chat_id is not None and ChatActionSender is not None:
             async with ChatActionSender(
                 action=ChatAction.TYPING, chat_id=chat_id, bot=context.bot
             ):
-                response_text = ollama.query_rag(ChatMessage(question=text), str(chat_id))
+                response_text = await _query_rag_with_timeout(message_payload, session_id)
         else:
             if chat_id is not None:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-                session_id = str(chat_id)
-            else:
-                session_id = ""
-            response_text = ollama.query_rag(ChatMessage(question=text), session_id)
+            response_text = await _query_rag_with_timeout(message_payload, session_id)
         LOGGER.info("Assistant response for chat %s: %s", chat_id, _truncate(response_text))
+    except asyncio.TimeoutError:
+        LOGGER.warning("Timed out querying RAG backend for chat %s", chat_id)
+        await update.message.reply_text(
+            "Sorry, the request timed out before I could reply. Please try again later."
+        )
+        return
     except Exception:  # pragma: no cover - defensive logging
         LOGGER.exception("Failed to query RAG backend for chat %s", chat_id)
         await update.message.reply_text(
