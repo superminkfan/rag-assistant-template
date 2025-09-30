@@ -18,3 +18,42 @@ def test_load_documents_only_adoc(tmp_path):
 
     assert len(documents) == 1
     assert documents[0].metadata.get("source", "").endswith("sample.adoc")
+
+
+def test_preprocess_tabs_content_unix_only():
+    from scripts.ingest_adoc import preprocess_tabs_content
+
+    raw_content = """Intro text
+[tabs]
+====
+tab:Unix[]
+--
+[source,bash]
+----
+echo 'hello'
+----
+--
+tab:Unix[]
+--
+[source,bash]
+----
+echo 'hello'
+----
+--
+tab:Windows[]
+--
+dir
+--
+====
+Outro text
+"""
+
+    expected = """Intro text
+[source,bash]
+----
+echo 'hello'
+----
+Outro text
+"""
+
+    assert preprocess_tabs_content(raw_content) == expected
