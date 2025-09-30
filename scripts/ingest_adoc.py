@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import os
 import shutil
+import re
 from pathlib import Path
 
 from langchain_community.document_loaders import TextLoader
@@ -30,6 +31,133 @@ def walk_through_files(path, file_extensions=(".adoc", ".md")):
                 yield os.path.join(dir_path, filename)
 
 
+def preprocess_tabs_content(text: str) -> str:
+    """Collapse AsciiDoc tab blocks to Unix-only content.
+
+    The Antora tab syntax looks like::
+
+        [tabs]
+        ====                              or  --
+        tab:Unix[]
+        --
+        <content>
+        --
+        tab:Windows[]
+        --
+        <content>
+        --
+        ====                              or  --
+
+    This helper removes the surrounding tab scaffolding, keeps only
+    ``tab:Unix[]`` sections, and deduplicates identical Unix content.
+    """
+
+    had_trailing_newline = text.endswith("\n")
+    lines = text.splitlines()
+    processed_lines: list[str] = []
+    i = 0
+
+    def _consume_tabs_block(start_index: int) -> tuple[list[str], int]:
+        block_lines: list[str] = []
+        idx = start_index + 1
+
+        # Skip optional blank lines after [tabs]
+        while idx < len(lines) and lines[idx].strip() == "":
+            idx += 1
+
+        if idx >= len(lines):
+            return [lines[start_index]], start_index + 1
+
+        end_token = lines[idx].strip()
+        if end_token not in {"====", "--"}:
+            return [lines[start_index]], start_index + 1
+
+        idx += 1
+        while idx < len(lines):
+            if lines[idx].strip() == end_token:
+                idx += 1
+                break
+            block_lines.append(lines[idx])
+            idx += 1
+        else:
+            # Unterminated block; fall back to original text
+            return lines[start_index:idx], idx
+
+        processed_block_lines = _process_tab_sections(block_lines)
+        return processed_block_lines, idx
+
+    def _process_tab_sections(block_body: list[str]) -> list[str]:
+        sections: list[tuple[str, list[str]]] = []
+        current_tab: str | None = None
+        collecting = False
+        buffer: list[str] = []
+
+        for line in block_body:
+            stripped = line.strip()
+            tab_match = re.match(r"tab:([^\[]+)\[\]", stripped)
+            if tab_match:
+                if collecting and current_tab is not None:
+                    sections.append((current_tab, buffer))
+                current_tab = tab_match.group(1)
+                collecting = False
+                buffer = []
+                continue
+
+            if stripped == "--":
+                if current_tab is None:
+                    continue
+                if collecting:
+                    sections.append((current_tab, buffer))
+                    collecting = False
+                    current_tab = None
+                    buffer = []
+                else:
+                    collecting = True
+                    buffer = []
+                continue
+
+            if collecting and current_tab is not None:
+                buffer.append(line)
+
+        if collecting and current_tab is not None:
+            sections.append((current_tab, buffer))
+
+        unix_sections: list[str] = []
+        seen_keys: set[str] = set()
+        for tab_name, tab_lines in sections:
+            if tab_name.strip().lower() != "unix":
+                continue
+            text_block = "\n".join(tab_lines)
+            key = "\n".join(line.rstrip() for line in tab_lines).strip()
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            unix_sections.append(text_block)
+
+        output_lines: list[str] = []
+        for idx, section in enumerate(unix_sections):
+            section_lines = section.split("\n") if section else [""]
+            if idx > 0 and output_lines and output_lines[-1] != "":
+                output_lines.append("")
+            output_lines.extend(section_lines)
+
+        return output_lines
+
+    while i < len(lines):
+        if lines[i].strip() == "[tabs]":
+            replacement, next_index = _consume_tabs_block(i)
+            processed_lines.extend(replacement)
+            i = next_index
+        else:
+            processed_lines.append(lines[i])
+            i += 1
+
+    result = "\n".join(processed_lines)
+    if had_trailing_newline:
+        result += "\n"
+    return result
+
+
 def load_documents(
     data_path: Path, file_extensions: tuple[str, ...] | None = None
 ):
@@ -44,7 +172,11 @@ def load_documents(
     for f_name in walk_through_files(str(data_path), file_extensions=extensions):
         # TextLoader safely reads both .adoc and .md files
         document_loader = TextLoader(f_name, encoding="utf-8")
-        documents.extend(document_loader.load())
+        loaded = document_loader.load()
+        for doc in loaded:
+            cleaned_content = preprocess_tabs_content(doc.page_content)
+            doc.page_content = cleaned_content
+        documents.extend(loaded)
     return documents
 
 
