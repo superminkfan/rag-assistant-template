@@ -117,8 +117,11 @@ up any web framework components.
   rebuild the vector store whenever new documentation needs to be indexed.  All
   scripts look for content in `../data` by default; ensure that directory exists
   or provide an alternative with `--data-path /path/to/sources` before running
-  them.  Each script accepts an optional `--reset` flag to delete the existing
-  Chroma database before ingesting.
+  them.  The Markdown ingester always recreates the `db_metadata_v5/` directory
+  and does **not** accept `--reset`; use the flag with the AsciiDoc or Javadoc
+  scripts when you want them to wipe the database automatically.  For a clean
+  Markdown-only run, delete the `db_metadata_v5/` directory manually before
+  starting ingestion.
 
 ### Building a combined vector store
 
