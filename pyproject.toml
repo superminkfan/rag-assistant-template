@@ -1,0 +1,28 @@
+[project]
+name = "rag-assistant-template"
+version = "0.2.0"
+description = "Local CLI-first RAG assistant for Ignite/DataGrid documentation and incident analysis."
+requires-python = ">=3.10"
+dependencies = [
+    "langchain",
+    "langchain-community",
+    "langchain-chroma",
+    "langchain-ollama",
+    "chromadb",
+    "requests",
+    "PyYAML",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[project.scripts]
+rag-assistant = "rag_assistant.cli:main"
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "src",
+    ".",
+]

@@ -2,5 +2,7 @@ langchain
 langchain-community
 langchain-chroma
 langchain-ollama
-python-telegram-bot
+chromadb
+requests
+PyYAML
 pytest

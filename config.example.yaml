@@ -1,0 +1,21 @@
+paths:
+  datagrid_docs: /path/to/datagrid-docs
+  ignite_docs: ./data
+  artifacts_root: ~/.rag-assistant/artifacts
+  db_path: ~/.rag-assistant/artifacts/chroma
+
+jira:
+  base_url: https://jira.example.com
+  jql: project = EXAMPLE ORDER BY key ASC
+  cert_path: /path/to/client.pem
+  output_root: ~/.rag-assistant/artifacts/jira/export
+
+ollama:
+  model: llama3.2:latest
+  embedding_model: mxbai-embed-large
+  temperature: 0.1
+
+retrieval:
+  vector_k: 6
+  keyword_k: 8
+  final_k: 6

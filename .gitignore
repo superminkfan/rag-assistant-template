@@ -1,0 +1,13 @@
+.DS_Store
+.idea/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+.venv/
+env/
+
+config.yaml
+db_metadata_v5/
+scripts/jira/export/
+scripts/jira/legacy/**/jira_issues*.csv
