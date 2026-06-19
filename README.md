@@ -258,12 +258,41 @@ The CLI uses hybrid retrieval:
 
 - vector search through Chroma and Ollama embeddings;
 - lightweight keyword search over the local Chroma collection;
-- score merging and final context formatting with deterministic citations.
+- deterministic reranking and final context formatting with deterministic citations;
 - strong-token filtering for incident-like queries, so exact terms such as `os::commit_memory`,
   `RMI`, `TCP`, `WAL`, `checkpoint`, or exception names are not drowned out by generic vector matches.
 
 This helps with incident terms such as exception names, configuration keys, log phrases, WAL,
 checkpointing, PME, topology changes, and other exact strings that pure vector search can miss.
+
+### Retrieval parameters
+
+The `retrieval` section controls how many chunks are considered before the assistant builds the
+final prompt:
+
+```yaml
+retrieval:
+  vector_k: 24
+  keyword_k: 32
+  final_k: 6
+```
+
+`vector_k` is the number of candidates returned by semantic search through Chroma and Ollama
+embeddings. Increase it when answers miss conceptually related documentation. Higher values improve
+recall but make retrieval slower.
+
+`keyword_k` is the number of candidates returned by exact-token keyword search over the local
+collection. Increase it for incident analysis with exception names, configuration keys, log phrases,
+WAL, PME, checkpointing, topology versions, or other exact technical strings. Higher values make the
+keyword pass consider more chunks before reranking.
+
+`final_k` is the number of chunks kept after merging and reranking candidates. These chunks are
+inserted into the LLM prompt and appear in `Sources`. Keep this much smaller than `vector_k` and
+`keyword_k`; increasing it can help questions that need several independent sources, but it also
+increases prompt size and the chance of noisy context.
+
+The default profile, `vector_k: 24`, `keyword_k: 32`, `final_k: 6`, searches broadly first and then
+keeps a compact final context.
 
 ## Smoke Testing
 

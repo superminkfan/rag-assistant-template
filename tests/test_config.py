@@ -4,7 +4,13 @@ import pytest
 
 from rag_assistant import config as config_module
 from rag_assistant.config import load_config, source_path_for_type
-from rag_assistant.settings import DEFAULT_DB_PATH, DEFAULT_JIRA_OUTPUT_ROOT
+from rag_assistant.settings import (
+    DEFAULT_DB_PATH,
+    DEFAULT_FINAL_K,
+    DEFAULT_JIRA_OUTPUT_ROOT,
+    DEFAULT_KEYWORD_K,
+    DEFAULT_VECTOR_K,
+)
 
 
 def test_load_config_reads_yaml_sections(tmp_path):
@@ -63,6 +69,9 @@ def test_load_config_uses_safe_defaults_without_file(tmp_path, monkeypatch):
     assert config.config_path is None
     assert config.paths.db_path == DEFAULT_DB_PATH
     assert config.jira.output_root == DEFAULT_JIRA_OUTPUT_ROOT
+    assert config.retrieval.vector_k == DEFAULT_VECTOR_K
+    assert config.retrieval.keyword_k == DEFAULT_KEYWORD_K
+    assert config.retrieval.final_k == DEFAULT_FINAL_K
 
 
 def test_load_config_raises_for_missing_explicit_file(tmp_path):

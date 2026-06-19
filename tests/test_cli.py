@@ -2,6 +2,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from rag_assistant import cli
+from rag_assistant.settings import DEFAULT_VECTOR_K
 
 
 def write_config(tmp_path, text="{}"):
@@ -201,7 +202,7 @@ def test_cli_ask_dispatches_with_built_components(monkeypatch, tmp_path, capsys)
 
     assert result == 0
     assert calls["factory"]["db_path"] == tmp_path / "db"
-    assert calls["factory"]["vector_k"] == 6
+    assert calls["factory"]["vector_k"] == DEFAULT_VECTOR_K
     assert calls["question"] == "what happened"
     assert calls["llm"] is llm
     assert calls["retriever"] is retriever

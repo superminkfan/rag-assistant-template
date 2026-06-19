@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import math
 import re
 
@@ -12,30 +13,118 @@ def hybrid_search(
     vector_store: VectorStore,
     query: str,
     *,
-    vector_k: int = 6,
-    keyword_k: int = 8,
+    vector_k: int = 24,
+    keyword_k: int = 32,
     final_k: int = 6,
 ) -> list[RagDocument]:
-    """Retrieve documents with vector search plus a lightweight keyword pass."""
+    """Retrieve a broad candidate pool, then rerank to a compact context."""
 
-    vector_docs = vector_store.similarity_search(query, k=vector_k)
+    candidates = collect_candidates(
+        vector_store,
+        query,
+        vector_k=vector_k,
+        keyword_k=keyword_k,
+    )
+    ranked = rerank_candidates(query, candidates)
+    ranked = prefer_strong_incident_matches(query, ranked)
+    return select_final_context(ranked, final_k)
+
+
+@dataclass
+class RetrievalCandidate:
+    """A merged retrieval candidate with source-specific ranks."""
+
+    document: RagDocument
+    vector_rank: int | None = None
+    keyword_rank: int | None = None
+    keyword_score: float = 0.0
+
+
+def collect_candidates(
+    vector_store: VectorStore,
+    query: str,
+    *,
+    vector_k: int,
+    keyword_k: int,
+) -> list[RetrievalCandidate]:
+    """Collect candidates from semantic and lexical retrieval passes."""
+
+    vector_docs = (
+        vector_store.similarity_search(query, k=vector_k)
+        if vector_k > 0
+        else []
+    )
     keyword_docs = keyword_search(vector_store, query, k=keyword_k)
+    return merge_candidates(query, vector_docs=vector_docs, keyword_docs=keyword_docs)
 
-    merged: dict[str, tuple[float, RagDocument]] = {}
+
+def merge_candidates(
+    query: str,
+    *,
+    vector_docs: list[RagDocument],
+    keyword_docs: list[RagDocument],
+) -> list[RetrievalCandidate]:
+    """Deduplicate vector and keyword candidates while keeping rank signals."""
+
+    candidates: dict[str, RetrievalCandidate] = {}
+
     for rank, document in enumerate(vector_docs):
         key = document_key(document)
-        merged[key] = (merged.get(key, (0.0, document))[0] + 0.25 / (rank + 1), document)
+        candidate = candidates.setdefault(key, RetrievalCandidate(document=document))
+        if candidate.vector_rank is None or rank < candidate.vector_rank:
+            candidate.vector_rank = rank
 
     for rank, document in enumerate(keyword_docs):
         key = document_key(document)
-        score = lexical_score(query, getattr(document, "page_content", ""))
-        merged[key] = (
-            merged.get(key, (0.0, document))[0] + score + 0.5 / (rank + 1),
-            document,
+        candidate = candidates.setdefault(key, RetrievalCandidate(document=document))
+        if candidate.keyword_rank is None or rank < candidate.keyword_rank:
+            candidate.keyword_rank = rank
+        candidate.keyword_score = max(
+            candidate.keyword_score,
+            lexical_score(query, getattr(document, "page_content", "")),
         )
 
-    ranked = sorted(merged.values(), key=lambda item: item[0], reverse=True)
-    ranked = prefer_strong_incident_matches(query, ranked)
+    return list(candidates.values())
+
+
+def rerank_candidates(
+    query: str,
+    candidates: list[RetrievalCandidate],
+) -> list[tuple[float, RagDocument]]:
+    """Rank merged candidates using deterministic text, rank, and metadata signals."""
+
+    ranked = [
+        (candidate_score(query, candidate), candidate.document)
+        for candidate in candidates
+    ]
+    return sorted(ranked, key=lambda item: item[0], reverse=True)
+
+
+def candidate_score(query: str, candidate: RetrievalCandidate) -> float:
+    """Compute a deterministic relevance score for a merged candidate."""
+
+    document = candidate.document
+    score = 0.0
+
+    if candidate.vector_rank is not None:
+        score += 1.0 / (candidate.vector_rank + 1)
+    if candidate.keyword_rank is not None:
+        score += 1.5 / (candidate.keyword_rank + 1)
+
+    score += candidate.keyword_score
+    score += metadata_score(query, document)
+    score += strong_token_coverage_boost(query, document)
+    return score
+
+
+def select_final_context(
+    ranked: list[tuple[float, RagDocument]],
+    final_k: int,
+) -> list[RagDocument]:
+    """Return only the compact set that should be inserted into the prompt."""
+
+    if final_k <= 0:
+        return []
     return [document for _, document in ranked[:final_k]]
 
 
@@ -43,7 +132,7 @@ def keyword_search(
     vector_store: VectorStore,
     query: str,
     *,
-    k: int = 8,
+    k: int = 32,
 ) -> list[RagDocument]:
     """Run a small in-process keyword search over stored documents."""
 
@@ -100,6 +189,61 @@ def lexical_score(query: str, text: str) -> float:
     return score
 
 
+def metadata_score(query: str, document: RagDocument) -> float:
+    """Score query-token matches in metadata that helps source selection."""
+
+    metadata = getattr(document, "metadata", {}) or {}
+    score = 0.0
+    score += _metadata_field_score(query, metadata.get("title"), weight=1.5)
+    score += _metadata_field_score(query, metadata.get("section"), weight=1.0)
+    score += _metadata_field_score(query, metadata.get("component"), weight=0.8)
+    source = metadata.get("source_path") or metadata.get("source")
+    score += _metadata_field_score(query, source, weight=0.3)
+    return score
+
+
+def strong_token_coverage_boost(query: str, document: RagDocument) -> float:
+    """Reward candidates that cover several exact incident tokens."""
+
+    query_strong_tokens = {
+        token
+        for token in tokenize(query)
+        if token in STRONG_INCIDENT_TERMS or looks_like_incident_token(token)
+    }
+    if len(query_strong_tokens) < 2:
+        return 0.0
+
+    document_tokens = _document_tokens(document)
+    overlap_count = len(query_strong_tokens & document_tokens)
+    if overlap_count < 2:
+        return 0.0
+    return (overlap_count * 1.5) + (overlap_count / len(query_strong_tokens) * 2.0)
+
+
+def _metadata_field_score(query: str, value: object, *, weight: float) -> float:
+    if not value:
+        return 0.0
+
+    query_tokens = set(tokenize(query))
+    field_tokens = set(tokenize(str(value)))
+    if not query_tokens or not field_tokens:
+        return 0.0
+
+    score = 0.0
+    for token in query_tokens & field_tokens:
+        score += token_importance(token) * weight
+    return score
+
+
+def _document_tokens(document: RagDocument) -> set[str]:
+    metadata = getattr(document, "metadata", {}) or {}
+    metadata_text = " ".join(
+        str(metadata.get(key) or "")
+        for key in ("title", "section", "component", "source_path", "source")
+    )
+    return set(tokenize(f"{getattr(document, 'page_content', '')}\n{metadata_text}"))
+
+
 def tokenize(text: str) -> list[str]:
     """Tokenize mixed Russian/English technical text."""
 
@@ -144,7 +288,7 @@ def prefer_strong_incident_matches(
 
     preferred: list[tuple[float, RagDocument]] = []
     for score, document in ranked:
-        document_tokens = set(tokenize(getattr(document, "page_content", "")))
+        document_tokens = _document_tokens(document)
         if len(query_strong_tokens & document_tokens) >= 2:
             preferred.append((score, document))
 
