@@ -62,6 +62,9 @@ def build_qa_prompt(question: str, documents: list[RagDocument]) -> str:
     return f"""Ты локальный RAG-ассистент по Ignite/DataGrid.
 Отвечай только по контексту. Если контекста недостаточно, прямо скажи, чего не хватает.
 Подкрепляй важные утверждения ссылками вида [1], [2].
+При конфликте источников используй порядок доверия: официальная документация,
+curated troubleshooting, внутренние incident cases, community Q&A, mailing list.
+Для community-источников учитывай дату, версию продукта, score и accepted status.
 
 Контекст:
 {format_context(documents)}
@@ -80,6 +83,8 @@ def build_incident_prompt(incident_text: str, documents: list[RagDocument]) -> s
 Используй только приведенный контекст и текст инцидента. Не выдумывай факты.
 Если данных недостаточно, явно перечисли, какие логи, метрики или команды нужны.
 Не называй вывод уверенным, если он основан только на похожих прошлых инцидентах.
+При конфликте предпочитай официальную документацию и version-compatible curated материалы;
+community Q&A и mailing list используй как гипотезы или практические аналоги.
 Каждый пункт в Evidence, Diagnostics и Mitigation должен заканчиваться ссылкой на источник вида [1] или [2].
 Если для пункта нет источника, напиши, что это гипотеза и какие данные нужны для проверки.
 
@@ -110,7 +115,12 @@ def format_context(documents: list[RagDocument]) -> str:
     for document in documents:
         metadata = getattr(document, "metadata", {}) or {}
         source_id = metadata.get("source_id", "?")
-        source = metadata.get("source") or metadata.get("source_path") or "unknown"
+        source = (
+            metadata.get("source_url")
+            or metadata.get("source")
+            or metadata.get("source_path")
+            or "unknown"
+        )
         title = metadata.get("title") or ""
         section = metadata.get("section") or ""
         prefix = f"[{source_id}] Source: {source}"
@@ -118,6 +128,12 @@ def format_context(documents: list[RagDocument]) -> str:
             prefix += f"\nTitle: {title}"
         if section:
             prefix += f"\nSection: {section}"
+        if metadata.get("trust_tier"):
+            prefix += f"\nTrust tier: {metadata['trust_tier']}"
+        if metadata.get("product_version"):
+            prefix += f"\nProduct version: {metadata['product_version']}"
+        if metadata.get("published_at"):
+            prefix += f"\nPublished: {metadata['published_at']}"
         blocks.append(f"{prefix}\n{getattr(document, 'page_content', '')}")
     return "\n\n---\n\n".join(blocks)
 
@@ -138,22 +154,39 @@ def add_citation_metadata(documents: list[RagDocument]) -> None:
 def append_sources(response: str, documents: list[RagDocument]) -> str:
     """Append a deterministic source legend."""
 
-    grouped: dict[tuple[str, str], list[str]] = {}
+    grouped: dict[tuple[str, str, str, str, str], list[str]] = {}
     for document in documents:
         metadata = getattr(document, "metadata", {}) or {}
         source_id = str(metadata.get("source_id") or "")
-        source = str(metadata.get("source") or metadata.get("source_path") or "")
+        source = str(
+            metadata.get("source_url")
+            or metadata.get("source")
+            or metadata.get("source_path")
+            or ""
+        )
         title = str(metadata.get("title") or "")
+        author = str(metadata.get("author") or "")
+        license_name = str(metadata.get("license") or "")
+        trust_tier = str(metadata.get("trust_tier") or "")
         if not source_id or not source:
             continue
-        grouped.setdefault((source, title), []).append(source_id)
+        grouped.setdefault((source, title, author, license_name, trust_tier), []).append(source_id)
 
     lines: list[str] = []
-    for (source, title), source_ids in grouped.items():
+    for (source, title, author, license_name, trust_tier), source_ids in grouped.items():
         citations = ", ".join(f"[{source_id}]" for source_id in source_ids)
         label = f"{citations} {source}"
         if title:
             label += f" - {title}"
+        details = []
+        if author:
+            details.append(f"author: {author}")
+        if trust_tier:
+            details.append(f"trust: {trust_tier}")
+        if license_name:
+            details.append(f"license: {license_name}")
+        if details:
+            label += " (" + ", ".join(details) + ")"
         lines.append(label)
     if not lines:
         return response
@@ -161,11 +194,7 @@ def append_sources(response: str, documents: list[RagDocument]) -> str:
 
 
 def ensure_incident_section_citations(response: str, documents: list[RagDocument]) -> str:
-    """Add fallback citations to operational incident bullets when the LLM omits them."""
-
-    fallback_id = _first_source_id(documents)
-    if not fallback_id:
-        return response
+    """Mark uncited operational bullets without attaching a misleading source."""
 
     target_sections = {"evidence", "diagnostics", "mitigation"}
     current_section = ""
@@ -179,7 +208,7 @@ def ensure_incident_section_citations(response: str, documents: list[RagDocument
             continue
 
         if current_section in target_sections and _is_bullet_line(line) and not _has_citation(line):
-            output_lines.append(f"{line.rstrip()} [{fallback_id}]")
+            output_lines.append(f"{line.rstrip()} [источник не указан]")
         else:
             output_lines.append(line)
 

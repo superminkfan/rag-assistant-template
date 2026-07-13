@@ -6,7 +6,9 @@ from rag_assistant import config as config_module
 from rag_assistant.config import load_config, source_path_for_type
 from rag_assistant.settings import (
     DEFAULT_DB_PATH,
+    DEFAULT_CONFLUENCE_OUTPUT_ROOT,
     DEFAULT_FINAL_K,
+    DEFAULT_IGNITE_FIREFIGHTER_KB_PATH,
     DEFAULT_JIRA_OUTPUT_ROOT,
     DEFAULT_KEYWORD_K,
     DEFAULT_VECTOR_K,
@@ -20,6 +22,7 @@ def test_load_config_reads_yaml_sections(tmp_path):
 paths:
   datagrid_docs: docs/datagrid
   ignite_docs: ~/ignite-docs
+  ignite_firefighter_kb: data/firefighter
   db_path: artifacts/chroma
   artifacts_root: artifacts
 jira:
@@ -34,6 +37,9 @@ retrieval:
   vector_k: 11
   keyword_k: 12
   final_k: 13
+confluence:
+  output_root: artifacts/confluence-pages
+  apache_seed_url: https://wiki.example/confluence/display/IGNITE/Design
 """,
         encoding="utf-8",
     )
@@ -43,6 +49,7 @@ retrieval:
     assert config.config_path == config_path.resolve()
     assert config.paths.datagrid_docs == (tmp_path / "docs/datagrid").resolve()
     assert config.paths.ignite_docs == Path.home() / "ignite-docs"
+    assert config.paths.ignite_firefighter_kb == (tmp_path / "data/firefighter").resolve()
     assert config.paths.db_path == (tmp_path / "artifacts/chroma").resolve()
     assert config.paths.artifacts_root == (tmp_path / "artifacts").resolve()
     assert config.jira.base_url == "https://jira.example"
@@ -55,6 +62,8 @@ retrieval:
     assert config.retrieval.vector_k == 11
     assert config.retrieval.keyword_k == 12
     assert config.retrieval.final_k == 13
+    assert config.confluence.output_root == (tmp_path / "artifacts/confluence-pages").resolve()
+    assert config.confluence.apache_seed_url == "https://wiki.example/confluence/display/IGNITE/Design"
 
 
 def test_load_config_uses_safe_defaults_without_file(tmp_path, monkeypatch):
@@ -68,7 +77,9 @@ def test_load_config_uses_safe_defaults_without_file(tmp_path, monkeypatch):
 
     assert config.config_path is None
     assert config.paths.db_path == DEFAULT_DB_PATH
+    assert config.paths.ignite_firefighter_kb == DEFAULT_IGNITE_FIREFIGHTER_KB_PATH
     assert config.jira.output_root == DEFAULT_JIRA_OUTPUT_ROOT
+    assert config.confluence.output_root == DEFAULT_CONFLUENCE_OUTPUT_ROOT
     assert config.retrieval.vector_k == DEFAULT_VECTOR_K
     assert config.retrieval.keyword_k == DEFAULT_KEYWORD_K
     assert config.retrieval.final_k == DEFAULT_FINAL_K
@@ -99,3 +110,7 @@ jira:
     assert source_path_for_type(config, "jira-snapshot") == (
         tmp_path / "jira-out/latest/curated"
     ).resolve()
+    assert source_path_for_type(config, "confluence-snapshot", "sberworks") == (
+        tmp_path / "artifacts/confluence/sberworks/latest"
+    ).resolve()
+    assert source_path_for_type(config, "stackoverflow-kb") == DEFAULT_IGNITE_FIREFIGHTER_KB_PATH

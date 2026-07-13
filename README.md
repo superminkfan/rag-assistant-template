@@ -121,19 +121,81 @@ rag-assistant --config config.yaml ingest \
   --source-type jira-snapshot
 ```
 
+### Ingest the bundled ignite-firefighter knowledge base
+
+The selected troubleshooting tree, GC notes, Stack Overflow/GitHub Q&A, and Apache Ignite user-list
+archive are copied into `data/ignite-firefighter`. Their upstream commit and checksums are recorded
+in `data/ignite-firefighter/manifest.json`.
+
+Four independent source types are available:
+
+- `ignite-firefighter-tree`
+- `ignite-firefighter-notes`
+- `stackoverflow-kb`
+- `ignite-user-mailing-list`
+
+Inspect and ingest them independently so each corpus can be refreshed or rolled back with
+`--replace-source-type`. The exact validated commands, dry-run counts, backup location, trust
+hierarchy, and retrieval behavior are documented in
+[`docs/ignite-firefighter-kb.md`](docs/ignite-firefighter-kb.md).
+
+### Snapshot and ingest Confluence pages
+
+Confluence sources use an atomic local snapshot before embedding. Public Apache pages are fetched
+through the Confluence REST API. The Design Documents profile includes the seed and its 38 direct
+same-space links, without recursively crawling the rest of the wiki:
+
+```bash
+rag-assistant --config config.yaml snapshot-confluence \
+  --source-id apache-ignite-design
+
+rag-assistant --config config.yaml inspect-source \
+  --source-type confluence-snapshot \
+  --source-id apache-ignite-design
+
+rag-assistant --config config.yaml ingest \
+  --source-type confluence-snapshot \
+  --source-id apache-ignite-design \
+  --replace-source-id
+```
+
+Private SberWorks pages are imported from browser-saved HTML without a network request. The
+`sberworks` profile finds and validates the five configured page ids in the supplied directory;
+unrelated HTML files are ignored:
+
+```bash
+rag-assistant --config config.yaml snapshot-confluence \
+  --source-id sberworks \
+  --offline-dir ~/Downloads
+
+rag-assistant --config config.yaml inspect-source \
+  --source-type confluence-snapshot \
+  --source-id sberworks
+
+rag-assistant --config config.yaml ingest \
+  --source-type confluence-snapshot \
+  --source-id sberworks \
+  --replace-source-id
+```
+
+Snapshots are published under `confluence.output_root/<source-id>/snapshots/`; `latest` changes only
+after page counts, unique ids, required metadata, and checksums have been validated. Text, headings,
+lists, tables, code blocks, panels, links, and image alt text are retained. Attachments and OCR are
+not included.
+
 ### Export and ingest Jira snapshots
 
 Jira credentials are read from environment variables:
 
-- `RAG_ASSISTANT_JIRA_USERNAME`
-- `RAG_ASSISTANT_JIRA_PASSWORD`
+- `UNAME`
+- `PASSWD`
 
 Set `jira.base_url`, `jira.jql`, and `jira.cert_path` in `config.yaml`. Export all issues whose
 summary starts with `[SBTSUPPORT-<number>]`:
 
 ```bash
-export RAG_ASSISTANT_JIRA_USERNAME="your-username"
-export RAG_ASSISTANT_JIRA_PASSWORD="your-password"
+export UNAME="your-username"
+export PASSWD="your-password"
 python scripts/jira/export_support_tickets.py --config config.yaml
 ```
 
@@ -180,6 +242,10 @@ long technical discussions attributable after chunking.
 ```bash
 rag-assistant --config config.yaml ask "Как проверить проблемы с WAL и checkpointing?"
 ```
+
+While the request is running in an interactive terminal, the CLI shows an animated activity
+indicator. After the answer it prints the total response time. Redirected output does not include
+the animation.
 
 When using zsh, quote questions that contain `?` or wildcard characters.
 
@@ -247,6 +313,14 @@ Each chunk stores more than raw text. The datagrid-docs loader attaches:
 - `section`
 - `chunk_index`
 - `chunk_id`
+
+Confluence chunks additionally include `source_id`, `source_url`, `confluence_page_id`, `space_key`,
+`version`, `updated_at`, and `crawl_depth`. Use `--replace-source-id` when refreshing one Confluence
+profile so other sources remain untouched.
+
+The ignite-firefighter corpora add `record_id`, `record_type`, `source_url`, `source_commit`,
+`trust_tier`, `authority_score`, `quality_score`, `product_version`, `published_at`, and
+format-specific fields such as tags, answer score, accepted status, or mailing-list thread id.
 
 This makes incident retrieval more useful than plain semantic search: answers can cite exact files,
 sections, product versions, and coarse components such as `persistence`, `cluster`, `security`,

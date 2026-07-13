@@ -4,5 +4,6 @@ langchain-chroma
 langchain-ollama
 chromadb
 requests
+beautifulsoup4
 PyYAML
 pytest

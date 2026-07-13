@@ -10,6 +10,7 @@ def test_format_index_summary_lists_metadata_counts():
                 "count": 12,
                 "sampled": 12,
                 "source_type": {"ignite-docs": 7, "datagrid-docs": 5},
+                "source_id": {"apache-ignite-design": 7},
                 "component": {"persistence": 4},
                 "guide": {"SQL": 3},
             }
@@ -22,6 +23,7 @@ def test_format_index_summary_lists_metadata_counts():
     assert "Collection: langchain" in text
     assert "Chunks: 12" in text
     assert "Source types: ignite-docs=7, datagrid-docs=5" in text
+    assert "Source ids: apache-ignite-design=7" in text
     assert "Components: persistence=4" in text
 
 

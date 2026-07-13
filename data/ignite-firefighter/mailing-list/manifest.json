@@ -1,0 +1,21 @@
+{
+  "created_at": "2026-06-07T14:08:14.001580+00:00",
+  "source_api": "https://lists.apache.org/api",
+  "source_list": "user@ignite.apache.org",
+  "archive_months": {
+    "first": "2018-11",
+    "last": "2018-11",
+    "count": 1
+  },
+  "selection": "threads with at least two archived messages; no semantic/content processing",
+  "format": "gzip-compressed mbox plus TSV thread index",
+  "all_messages_seen": 542,
+  "threads": 139,
+  "messages": 509,
+  "content_sha256": "96178ccd2333151464afaee3bca640f15098e1f4c28815a80b7b4d8b92a58b20",
+  "files": {
+    "data": "answered_threads.mbox.gz",
+    "index": "threads_index.tsv",
+    "manifest": "manifest.json"
+  }
+}

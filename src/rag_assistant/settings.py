@@ -13,6 +13,11 @@ DEFAULT_CONFIG_PATHS = (
 DEFAULT_ARTIFACTS_ROOT = Path.home() / ".rag-assistant" / "artifacts"
 DEFAULT_DB_PATH = DEFAULT_ARTIFACTS_ROOT / "chroma"
 DEFAULT_JIRA_OUTPUT_ROOT = DEFAULT_ARTIFACTS_ROOT / "jira" / "export"
+DEFAULT_CONFLUENCE_OUTPUT_ROOT = DEFAULT_ARTIFACTS_ROOT / "confluence"
+DEFAULT_IGNITE_FIREFIGHTER_KB_PATH = PROJECT_ROOT / "data" / "ignite-firefighter"
+DEFAULT_RETRIEVAL_EVALUATION_PATH = (
+    PROJECT_ROOT / "data" / "evaluation" / "ignite-firefighter-retrieval.json"
+)
 DEFAULT_OLLAMA_MODEL = "llama3.2:latest"
 DEFAULT_EMBEDDING_MODEL = "mxbai-embed-large"
 DEFAULT_TEMPERATURE = 0.1

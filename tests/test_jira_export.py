@@ -81,8 +81,8 @@ def test_fetch_all_comments_reads_every_page():
 def test_build_session_configures_transient_http_retries(tmp_path, monkeypatch):
     cert_path = tmp_path / "cert.pem"
     cert_path.write_text("certificate", encoding="utf-8")
-    monkeypatch.setenv("RAG_ASSISTANT_JIRA_USERNAME", "user")
-    monkeypatch.setenv("RAG_ASSISTANT_JIRA_PASSWORD", "secret")
+    monkeypatch.setenv("UNAME", "user")
+    monkeypatch.setenv("PASSWD", "secret")
 
     session = exporter.build_session(cert_path=cert_path)
     retry = session.get_adapter("https://").max_retries
@@ -96,10 +96,10 @@ def test_build_session_configures_transient_http_retries(tmp_path, monkeypatch):
 def test_build_session_requires_env_credentials(tmp_path, monkeypatch):
     cert_path = tmp_path / "cert.pem"
     cert_path.write_text("certificate", encoding="utf-8")
-    monkeypatch.delenv("RAG_ASSISTANT_JIRA_USERNAME", raising=False)
-    monkeypatch.delenv("RAG_ASSISTANT_JIRA_PASSWORD", raising=False)
+    monkeypatch.delenv("UNAME", raising=False)
+    monkeypatch.delenv("PASSWD", raising=False)
 
-    with pytest.raises(RuntimeError, match="RAG_ASSISTANT_JIRA_USERNAME"):
+    with pytest.raises(RuntimeError, match="UNAME"):
         exporter.build_session(cert_path=cert_path)
 
 
@@ -159,8 +159,8 @@ jira:
         calls["export"] = kwargs
         return tmp_path / "published"
 
-    monkeypatch.setenv("RAG_ASSISTANT_JIRA_USERNAME", "user")
-    monkeypatch.setenv("RAG_ASSISTANT_JIRA_PASSWORD", "secret")
+    monkeypatch.setenv("UNAME", "user")
+    monkeypatch.setenv("PASSWD", "secret")
     monkeypatch.setattr(exporter, "build_session", fake_build_session)
     monkeypatch.setattr(exporter, "export_snapshot", fake_export_snapshot)
 

@@ -1,0 +1,140 @@
+thread_id	messages	first_epoch	last_epoch	first_month	last_month	subject
+<1541040503241-0.post@n6.nabble.com>	2	1541040503	1542041502	2018-11	2018-11	Re: Comparison between java 8 streams functionality and Apache  Ignite
+<1132884500.1168512.1541050420460@mail.yahoo.com>	3	1541050420	1541059677	2018-11	2018-11	Does ignite provide a Comparator for Sort?
+<1541051762336-0.post@n6.nabble.com>	2	1541051762	1541053517	2018-11	2018-11	how ignite distribute sql query to all nodes when use  REPLICATED  mode
+<1541059505006-0.post@n6.nabble.com>	8	1541059505	1541789194	2018-11	2018-11	Re: Ouch! Argument is invalid: Cache name must not be null or  empty.
+<camp9fts616phgwubb1_6+3rv8yxoigbcfrfeyf1=xv-ootymba@mail.gmail.com>	2	1541067628	1541069066	2018-11	2018-11	Re: Durable memory with native persistence isssue
+<camp9ftqbp40dtcm-12kobcyg6p9cyq7wmivpjfpbci2qu6sdwg@mail.gmail.com>	10	1541067863	1542284520	2018-11	2018-11	Re: Long activation times with Ignite persistence enabled
+<1541069197181-0.post@n6.nabble.com>	6	1541069197	1542207515	2018-11	2018-11	Re: Unable to load more than 5g data through sqlline
+<1541070825313-0.post@n6.nabble.com>	4	1541070825	1541146385	2018-11	2018-11	What is the username&password of ignite web console
+<1541074284118-0.post@n6.nabble.com>	2	1541074284	1541490878	2018-11	2018-11	java.lang.UnsupportedOperationException: Invalid fast index type:  -21
+<camp9ftruekoxkgipwdtn9zfr7etb1tbrtr+7c0gpdghlcbg+gq@mail.gmail.com>	2	1541078597	1541103676	2018-11	2018-11	Re: IGNITE_EXCHANGE_HISTORY_SIZE value for Ignite client
+<1541152836572-0.post@n6.nabble.com>	3	1541152836	1541175815	2018-11	2018-11	Distributed Priority QUEUE
+<1541153219053-0.post@n6.nabble.com>	3	1541153219	1541277392	2018-11	2018-11	How to filter ip interfaces in TcpDiscoveryJdbcIpFinder
+<99988740-21c3-409e-849d-1b2de2f889fb@kyriba.com>	4	1541164565	1541417961	2018-11	2018-11	Apache Ignite - Near Cache consistency
+<dm5p105mb0203da7e018ea28bdc8977eefbcf0@dm5p105mb0203.namp105.prod.outlook.com>	3	1541183730	1541443592	2018-11	2018-11	Is there Ignite Eviction low water mark
+<cabxnqpsf0buchaquwmzy+94pdyb+wtslicl=inoba6xgbuzmma@mail.gmail.com>	4	1541208312	1543227464	2018-11	2018-11	Ignite Authentication
+<cak0qhnrjjhpxssqy2kvbxan2xjjny1u3fdt0eypscporm=pjhg@mail.gmail.com>	2	1541213524	1541496532	2018-11	2018-11	Re: destroy cache holding residual metadata in memory (2.7)
+<1541437844775-0.post@n6.nabble.com>	3	1541437844	1542026060	2018-11	2018-11	Slow Data Insertion On Large Cache : Spark Streaming
+<1541440358531-0.post@n6.nabble.com>	2	1541440358	1542201915	2018-11	2018-11	Security Setup
+<1673400639.12949.1541459913941@mail.yahoo.com>	2	1541459913	1542206608	2018-11	2018-11	Dependency resource injection with OpenWebBeans CDI instead of  Spring
+<1541505899.250017747@f426.i.mail.ru>	2	1541505899	1541636221	2018-11	2018-11	time series
+<capvghyx4dyujcgkj2xl20+f+4sr_xodbsnaym8zxzhrcokczaa@mail.gmail.com>	6	1541516133	1542184776	2018-11	2018-11	How does Ignite provides load balancing?
+<1541519145195-0.post@n6.nabble.com>	4	1541519145	1542127997	2018-11	2018-11	Does Apache Ignite support java 8 and hibernate 5.2 NOW?
+<capaghznmxv_2m=otqv=dkndrqavg=qawbjifopjrbi4v6h7cua@mail.gmail.com>	11	1541538062	1543251670	2018-11	2018-11	Suppressing reflective serialisation in Ignite
+<1541583703987-0.post@n6.nabble.com>	2	1541583703	1542202117	2018-11	2018-11	FIFO Queue with POPs AND PUSHes - like REDIS LIST
+<1541587404008-0.post@n6.nabble.com>	2	1541587404	1542011757	2018-11	2018-11	persistence when disk full
+<1541589646496-0.post@n6.nabble.com>	2	1541589646	1541610775	2018-11	2018-11	@IgniteInstanceResource not working as expected
+<1541606007416-0.post@n6.nabble.com>	2	1541606007	1541609364	2018-11	2018-11	Spring upgrade on Ignite
+<1541609435088-0.post@n6.nabble.com>	4	1541609435	1542006337	2018-11	2018-11	SB2 with Ignite 2.6 Sample Application
+<capzjy6ueoi1rhkzb0skco6ruq0g++t43pipdmlkha3zr8dvbsa@mail.gmail.com>	2	1541646134	1542011314	2018-11	2018-11	Ignite issue during spark job execution
+<66dfd487-6f42-4763-980a-316800d3c0e6@gmail.com>	2	1541647521	1541768972	2018-11	2018-11	Sql long running queries 
+<1541648019906-0.post@n6.nabble.com>	6	1541648019	1542040918	2018-11	2018-11	My cluster can't activate after restart
+<1541676811286-0.post@n6.nabble.com>	3	1541676811	1542782326	2018-11	2018-11	JDBC thin: support connection pooling in 2.7?
+<1541677169232-0.post@n6.nabble.com>	2	1541677169	1542010675	2018-11	2018-11	ignite 2.7 connection pool support?
+<1541682445534-0.post@n6.nabble.com>	5	1541682445	1542040633	2018-11	2018-11	Why Ignite use so many heap space?
+<1541693987223-0.post@n6.nabble.com>	2	1541693987	1541767436	2018-11	2018-11	Ways to improve cluster activation time
+<1541703189795-0.post@n6.nabble.com>	3	1541703189	1541704835	2018-11	2018-11	what is Ignite Default atomicityMode
+<1541706176510-0.post@n6.nabble.com>	2	1541706176	1542009754	2018-11	2018-11	Status of Spark Structured Streaming Support IGNITE-9357
+<1541708723166-0.post@n6.nabble.com>	2	1541708723	1541839099	2018-11	2018-11	How could imporeve UNION ALL performance
+<7468b591-b444-4c5f-b11a-3542c9d518ba@gmail.com>	2	1541719415	1542008711	2018-11	2018-11	Multiple directories/filesystems for storagePath, walPath,  walArchivePath
+<1541757209872-0.post@n6.nabble.com>	8	1541757209	1542083699	2018-11	2018-11	Can't add new key/value pair to existing cache via sql command
+<1541757607862-0.post@n6.nabble.com>	4	1541757607	1542127690	2018-11	2018-11	How to add a new cache type to a existing cache?
+<3866ae9d-57bb-6579-8dc2-47af54995a2b@telia.com>	2	1541765474	1541770581	2018-11	2018-11	Events question
+<558d3840-0af1-4f9a-6af8-eb35ede15600@gmail.com>	6	1541783756	1542190613	2018-11	2018-11	Client connects to server after too long time interval (1 minute)
+<cag4v2m5n3ny4n=j=p_sjz7_jpzt_vukdbs7ter4_41bonk2hpq@mail.gmail.com>	2	1541839728	1542201244	2018-11	2018-11	Transformation and sort dataset
+<1541862204805-0.post@n6.nabble.com>	4	1541862204	1542200670	2018-11	2018-11	Ways to improve re-balancing of partitions and how to monitor  re-balance progress
+<cag517ysyxfnwk7eo3a60jxwwt8xv3afh+tdtr0c+p-m5oxae7g@mail.gmail.com>	5	1541867512	1542020635	2018-11	2018-11	Apache Ignite cannot access cache from listener after event “EVT_CACHE_STARTED” fired
+<cag4v2m7tdup-vyk519tuaib+0ubj9hlsicudacs3vdrusr==iq@mail.gmail.com>	2	1541969709	1542006517	2018-11	2018-11	Streamer without client node?
+<1542035201633-0.post@n6.nabble.com>	2	1542035201	1542646808	2018-11	2018-11	ZookeeperDiscovery block when communication error
+<caldshaed-hqrxrxxdtzwanyh61padxzvhcpynsqjj2dx01k6+w@mail.gmail.com>	4	1542090066	1542119006	2018-11	2018-11	Error in write-through
+<5beb32c20256045c00390899_0_88074@msllnjpmsgsv06>	4	1542140610	1543593266	2018-11	2018-11	Cache Structure
+<cabvsda60b-nynh6yb2d5s=kwrstki_mv9wucfrxyf1aqf=3y8w@mail.gmail.com>	4	1542188212	1542219168	2018-11	2018-11	Snapshotting and Restore in Ignite
+<1542198074177-0.post@n6.nabble.com>	2	1542198074	1542205405	2018-11	2018-11	What is update check & how to disable it?
+<1542225717078-0.post@n6.nabble.com>	5	1542225717	1543494207	2018-11	2018-11	Upgrading from 1.9 .... need help
+<5bec850c02b803d20039086a_0_82350@msllnjpmsgsv06>	6	1542227212	1542266398	2018-11	2018-11	SQL Support for IN predicate
+<1542231486786-0.post@n6.nabble.com>	2	1542231486	1543438897	2018-11	2018-11	C# Custom Affinity Functions
+<9a0538e4-dfeb-e0a4-4e41-ca3d4ff31de7@gmail.com>	2	1542280257	1542903159	2018-11	2018-11	Fastest way to remove in FIFO order
+<1542300438306-0.post@n6.nabble.com>	3	1542300438	1543229654	2018-11	2018-11	Is near cache persistent ?
+<5741606.1432118.1542330475356@mail.yahoo.com>	6	1542330475	1542802479	2018-11	2018-11	Ignite.Net - Defining SQL Schema without using QuerySqlField custom  attribute
+<1542348565389-0.post@n6.nabble.com>	15	1542348565	1543488563	2018-11	2018-11	Ignite startu is very slow
+<1542373321804-0.post@n6.nabble.com>	4	1542373321	1542379525	2018-11	2018-11	DataStreamer
+<1542373545553-0.post@n6.nabble.com>	2	1542373545	1542818540	2018-11	2018-11	Data not getting distributed across the cluster.
+<1542374084890-0.post@n6.nabble.com>	5	1542374084	1543494310	2018-11	2018-11	java.lang.ClassCastException:  org.apache.ignite.internal.pagemem.impl.PageMemoryNoStoreImpl
+<1542450357180-0.post@n6.nabble.com>	7	1542450357	1543246553	2018-11	2018-11	How to get the column names(or fieldsNames) of existing ignite sql  table
+<1542458772697-0.post@n6.nabble.com>	2	1542458772	1542620400	2018-11	2018-11	Re: how to do hibernate configuration for Apache ignite database
+<1542464132111-0.post@n6.nabble.com>	3	1542464132	1543243387	2018-11	2018-11	NearCache entries on heap ?
+<1542482874.1298581.1580386528.2e79b76f@webmail.messagingengine.com>	3	1542482874	1543014048	2018-11	2018-11	Local messaging not happening asynchronously
+<1542526573864-0.post@n6.nabble.com>	13	1542526573	1543588204	2018-11	2018-11	JDBC Streaming
+<1542527132778-0.post@n6.nabble.com>	3	1542527132	1542638105	2018-11	2018-11	SQL 'affinityKey' or 'AFFINITY_KEY"
+<1542620373316-0.post@n6.nabble.com>	2	1542620373	1543017104	2018-11	2018-11	Does a Ignite Cache return size metrics for a cache in local mode
+<1542681980652-0.post@n6.nabble.com>	7	1542681980	1542879367	2018-11	2018-11	New added property with @QuerySqlField does not persist
+<1542690189035-0.post@n6.nabble.com>	2	1542690189	1542819583	2018-11	2018-11	Simple off heap implementation ?
+<e7ad1d92-e3bc-1b95-9ee8-1157f636afe6@gmail.com>	4	1542717868	1543502518	2018-11	2018-11	Client stucks and doesn't connect
+<1542719530401-0.post@n6.nabble.com>	3	1542719530	1543422936	2018-11	2018-11	Swapspace - Getting OOM error ?maxSize more than RAM
+<1542720771136-0.post@n6.nabble.com>	2	1542720771	1542733736	2018-11	2018-11	Partioned cache is not distributing the data
+<1542728492421-0.post@n6.nabble.com>	3	1542728492	1543466136	2018-11	2018-11	Swap Space configuration - Exception_Access_Violation
+<1542735172934-0.post@n6.nabble.com>	2	1542735172	1542898884	2018-11	2018-11	SQL Affinity colocation
+<1542743370764-0.post@n6.nabble.com>	9	1542743370	1543092639	2018-11	2018-11	Read SQL table via cache api
+<1542764598416-0.post@n6.nabble.com>	2	1542764598	1542814003	2018-11	2018-11	Get Field Names In Select Query
+<1542770614851-0.post@n6.nabble.com>	4	1542770614	1542899583	2018-11	2018-11	Strange issue while call ddl
+<6f605e38b66b49f59c962a477c7a3c44@a1-systems.com>	6	1542781875	1542888114	2018-11	2018-11	How to force ignite clear disk space
+<1542787433221-0.post@n6.nabble.com>	2	1542787433	1542791984	2018-11	2018-11	Long activate time with tens of millions data
+<1542825948080-0.post@n6.nabble.com>	3	1542825948	1542880539	2018-11	2018-11	Invalid handshake message
+<1542878280237-0.post@n6.nabble.com>	2	1542878280	1543012007	2018-11	2018-11	LIKE operator issue in Ignite Database
+<1542888786000-0.post@n6.nabble.com>	5	1542888786	1543216908	2018-11	2018-11	In which case will ignite run following sql?
+<1542891317455-0.post@n6.nabble.com>	3	1542891317	1543022390	2018-11	2018-11	Does ignite keep loading result when the jdbc thin connection is  dead?
+<1542893015428-0.post@n6.nabble.com>	2	1542893015	1543008447	2018-11	2018-11	Why drop table operations affect all update operations.
+<1542907694459-0.post@n6.nabble.com>	12	1542907694	1543582285	2018-11	2018-11	Ignite benchmarking with YCSB
+<1542910970136-0.post@n6.nabble.com>	3	1542910970	1543256122	2018-11	2018-11	When will Apache Ignite support Java 11?
+<1542913278155-0.post@n6.nabble.com>	3	1542913278	1543038738	2018-11	2018-11	IgniteBiPredicate anonymous class - ClassNotFoundException
+<1542945715451-0.post@n6.nabble.com>	2	1542945715	1543233291	2018-11	2018-11	Does it affect the put, get, query operation when add or remove a  node?
+<1542945785846-0.post@n6.nabble.com>	3	1542945785	1542973612	2018-11	2018-11	Does it affect the put, get, query operation when add or remove a  node?
+<ca+19fdokhr=j3r-dxdossthnedphsfecxxmr=jdtvfehgahn-w@mail.gmail.com>	10	1542948108	1543580887	2018-11	2018-11	Ignite cluster going down frequently
+<eb29d8e.22a2.1673f5b6890.coremail.lk_hadoop@163.com>	3	1542956214	1543193849	2018-11	2018-11	can ignite accelerate sparkOnHive
+<1542966238715-0.post@n6.nabble.com>	2	1542966238	1543038505	2018-11	2018-11	Re: Passing parameters to IgniteBiPredicate
+<39b94d90a79745a4bb1d74498edbd251@gsdgeup10etn2.firmwide.corp.gs.com>	5	1542990326	1543596863	2018-11	2018-11	Continuous queries and duplicates
+<5bf83653.1c69fb81.9d02a.fb7c@mx.google.com>	3	1542993492	1543230091	2018-11	2018-11	Ignite 2.7
+<1542999442547-0.post@n6.nabble.com>	6	1542999442	1543334695	2018-11	2018-11	Ignite Query Slow
+<1542999749214-0.post@n6.nabble.com>	2	1542999749	1543007453	2018-11	2018-11	Ignite Query Slow
+<1543048689273-0.post@n6.nabble.com>	2	1543048689	1543161743	2018-11	2018-11	BinaryObject nested fields syntax?
+<1543052052883-0.post@n6.nabble.com>	2	1543052052	1543161592	2018-11	2018-11	Are QuerySqlField indexes used in ScanQueries?
+<1543060527444-0.post@n6.nabble.com>	2	1543060527	1543170549	2018-11	2018-11	How to write Trigger Script
+<1543067342998-0.post@n6.nabble.com>	4	1543067342	1543306409	2018-11	2018-11	Optimum storage startegy (Advice?)
+<1543067692331-0.post@n6.nabble.com>	2	1543067692	1543423728	2018-11	2018-11	MyBatis L2 newby
+<1543216535171-0.post@n6.nabble.com>	7	1543216535	1543505127	2018-11	2018-11	(IF NOT EXISTS) in CREATE TABLE statement does not work
+<1543224037472-0.post@n6.nabble.com>	3	1543224037	1543224825	2018-11	2018-11	Question about add new nodes to ignite cluster.
+<1543230167792-0.post@n6.nabble.com>	5	1543230167	1543592991	2018-11	2018-11	Why GridDiscoveryManager onSegmentation use StopNodeFailureHandler?
+<2e1356fa-d231-087b-ce69-742f21b98cce@gmx.de>	3	1543246370	1543535157	2018-11	2018-11	Speed Expectations for Ignite Queue
+<1543259884337-0.post@n6.nabble.com>	5	1543259884	1543341739	2018-11	2018-11	Values lost when cache is in partitioned mode in cluster
+<1543260727639-0.post@n6.nabble.com>	2	1543260727	1543315463	2018-11	2018-11	Support for SELECT ... INTO ?
+<1543281964553-0.post@n6.nabble.com>	2	1543281964	1543490765	2018-11	2018-11	some cases (IF NOT EXISTS) in the CREATE TABLE statement does not  work
+<ca+19fdnevjtf7=dv_y6-rivwedk9vpgyhmmhe1xcewukix446a@mail.gmail.com>	2	1543298499	1543593630	2018-11	2018-11	Can we have different Segmentation Policy in same cluster grid?
+<1543302574075-0.post@n6.nabble.com>	2	1543302574	1543573454	2018-11	2018-11	Failed to fetch SQL query result
+<1543309591948-0.post@n6.nabble.com>	2	1543309591	1543377090	2018-11	2018-11	SQL Query plan confusion
+<1543311347445-0.post@n6.nabble.com>	4	1543311347	1543500931	2018-11	2018-11	Use case difference between CacheLoader, CacheWriter and  CacheStore?
+<1543314466077-0.post@n6.nabble.com>	5	1543314466	1543403020	2018-11	2018-11	Failed to read data from remote connection
+<1543316442586-0.post@n6.nabble.com>	2	1543316442	1543330105	2018-11	2018-11	Create Same Table Name for Different caches Using SQl Api
+<1543324744455-0.post@n6.nabble.com>	3	1543324744	1543501007	2018-11	2018-11	Ignite performance is getting dipped by 50% when run both upserts  and query services are run together
+<1543340187691-0.post@n6.nabble.com>	2	1543340187	1543420796	2018-11	2018-11	Using 3rd Party Persistence Together with Ignite Persistence
+<1543343006513-0.post@n6.nabble.com>	2	1543343006	1543593571	2018-11	2018-11	Invalid property 'statisticsEnabled' is not writable
+<cakx=aqguiaxgr_5ftq5nmukjonplkwonsrn=o8omecj3voz52g@mail.gmail.com>	2	1543348988	1543424821	2018-11	2018-11	Re: Cluster freeze with SSL enabled and JDK 11
+<1543352574539-0.post@n6.nabble.com>	2	1543352574	1543593440	2018-11	2018-11	“Binary type has different field types” Error when using Date type field in Key or Value
+<ca+++tthadr1=6a=21cthbaptaj8ek=tvutvasgczcd_hhfgpzq@mail.gmail.com>	2	1543354798	1543405673	2018-11	2018-11	How to restart Apache Ignite nodes via command line
+<caa8f+x+wocqjzdqxxh8cprm-mjb_5vryv9zvha=vjbgv3vlkrg@mail.gmail.com>	2	1543385747	1543403776	2018-11	2018-11	PublicThreadPoolSize vs FifoQueueCollisionSpi.ParallelJobsNumber
+<1543395048774-0.post@n6.nabble.com>	8	1543395048	1543574784	2018-11	2018-11	ODBC driver build error
+<1543409304778-0.post@n6.nabble.com>	3	1543409304	1543486687	2018-11	2018-11	Ignite cache.getAll takes a long time
+<1543422343029-0.post@n6.nabble.com>	2	1543422343	1543422819	2018-11	2018-11	control.sh from remote terminal?
+<4d3420d9-2750-4db4-9172-882eaefd6967@oracle.com>	4	1543441328	1543468539	2018-11	2018-11	Pain points of Ignite user community
+<1543445119917-0.post@n6.nabble.com>	9	1543445119	1543589769	2018-11	2018-11	Slow select distinct query on primary key
+<capaghzmulonyswh+v54sev6r4i0451izu-qvm36qx3kula789w@mail.gmail.com>	3	1543448352	1543606064	2018-11	2018-11	GridProcessorAdapter fails to start due to failure to initialise WAL  segment on Ignite startup
+<1543467462111-0.post@n6.nabble.com>	2	1543467462	1543475582	2018-11	2018-11	RE: Failed to get page IO instance (page content is corrupted)  after onenode failed when trying to reboot.
+<1543474009792-0.post@n6.nabble.com>	2	1543474009	1543477942	2018-11	2018-11	Ignite can't activate
+<1543484371095-0.post@n6.nabble.com>	2	1543484371	1543491002	2018-11	2018-11	Effective way to pre-load data around 10 TB
+<1543487574794-0.post@n6.nabble.com>	2	1543487574	1543494833	2018-11	2018-11	Problems Starting Hello Workd GA example from ignite webstie
+<1543490989770-0.post@n6.nabble.com>	5	1543490989	1543512283	2018-11	2018-11	Geo redundancy support in Ignite?
+<cafkz8g4waunttjd74c+hticpyqbk1q8uu-cwe3=8juwaj=-fqw@mail.gmail.com>	4	1543494724	1543588399	2018-11	2018-11	Configuration of ignite
+<1543498576189-0.post@n6.nabble.com>	2	1543498576	1543588272	2018-11	2018-11	Is there any way to speed up delete data or drop table?
+<4971c678-3758-30b9-5e8e-bdfd844deeee@gmx.de>	2	1543538696	1543588243	2018-11	2018-11	Fair queue polling policy?
+<1543552735159-0.post@n6.nabble.com>	6	1543552735	1543576746	2018-11	2018-11	HELLO WORLD GA EXAMPLE
+<1543557283142-0.post@n6.nabble.com>	2	1543557283	1543560632	2018-11	2018-11	Gridgain Console monitoring question

@@ -58,6 +58,9 @@ def load_markdown_source(
             "guide": guide,
             "component": infer_component(guide, markdown_path.stem, title),
             "title": title,
+            "trust_tier": "authoritative",
+            "authority_score": 1.0,
+            "quality_score": 0.95,
         }
         documents.append(SourceDocument(page_content=text, metadata=metadata))
 
@@ -95,6 +98,9 @@ def load_asciidoc_source(
             "guide": guide,
             "component": infer_component(guide, adoc_path.stem, title),
             "title": title,
+            "trust_tier": "authoritative",
+            "authority_score": 1.0,
+            "quality_score": 0.95,
         }
         documents.append(SourceDocument(page_content=text, metadata=metadata))
 
@@ -110,7 +116,65 @@ def load_source_documents(source_path: Path, *, source_type: str) -> list[Source
         return load_asciidoc_source(source_path, source_type=source_type)
     if source_type == "jira-snapshot":
         return load_jira_snapshot_source(source_path, source_type=source_type)
+    if source_type == "confluence-snapshot":
+        return load_confluence_snapshot_source(source_path, source_type=source_type)
+    if source_type == "ignite-firefighter-tree":
+        from rag_assistant.ignite_firefighter_kb import load_troubleshooting_tree_source
+
+        return load_troubleshooting_tree_source(source_path, source_type=source_type)
+    if source_type == "ignite-firefighter-notes":
+        from rag_assistant.ignite_firefighter_kb import load_gc_notes_source
+
+        return load_gc_notes_source(source_path, source_type=source_type)
+    if source_type == "stackoverflow-kb":
+        from rag_assistant.ignite_firefighter_kb import load_stackoverflow_kb_source
+
+        return load_stackoverflow_kb_source(source_path, source_type=source_type)
+    if source_type == "ignite-user-mailing-list":
+        from rag_assistant.ignite_firefighter_kb import load_mailing_list_source
+
+        return load_mailing_list_source(source_path, source_type=source_type)
     raise ValueError(f"Unsupported source_type: {source_type}")
+
+
+def load_confluence_snapshot_source(
+    source_path: Path,
+    *,
+    source_type: str = "confluence-snapshot",
+) -> list[SourceDocument]:
+    """Load normalized pages from a validated Confluence snapshot."""
+
+    from rag_assistant.confluence import validate_snapshot
+
+    _, pages = validate_snapshot(source_path.resolve())
+    documents: list[SourceDocument] = []
+    for page in pages:
+        metadata = dict(page["metadata"])
+        metadata["source_type"] = source_type
+        metadata.setdefault("trust_tier", "authoritative")
+        metadata.setdefault("authority_score", 0.9)
+        metadata.setdefault("quality_score", 0.9)
+        metadata.setdefault("source_format", "markdown")
+        metadata.setdefault("guide", str(metadata.get("space_key") or "confluence"))
+        title_component = infer_component(
+            str(metadata["guide"]),
+            str(metadata.get("confluence_page_id") or ""),
+            str(metadata.get("title") or ""),
+        )
+        metadata.setdefault(
+            "component",
+            title_component
+            if title_component != metadata["guide"]
+            else infer_component(
+                str(metadata["guide"]),
+                str(metadata.get("confluence_page_id") or ""),
+                f"{metadata.get('title') or ''} {str(page['page_content'])[:1000]}",
+            ),
+        )
+        documents.append(
+            SourceDocument(page_content=str(page["page_content"]), metadata=metadata)
+        )
+    return documents
 
 
 def load_jira_snapshot_source(
@@ -570,7 +634,7 @@ def _jira_snapshot_base_metadata(
     title: str,
     component: str,
     quality_flags: list[str],
-) -> dict[str, str]:
+) -> dict[str, Any]:
     return {
         "source": source,
         "source_path": source,
@@ -601,6 +665,11 @@ def _jira_snapshot_base_metadata(
         "curated_eligible": row.get("curated_eligible", "false"),
         "quality_flags": json.dumps(quality_flags, ensure_ascii=False),
         "jira_url": row.get("jira_url", ""),
+        "source_url": row.get("jira_url", ""),
+        "record_id": row.get("issue_key", ""),
+        "trust_tier": "case-history",
+        "authority_score": 0.55,
+        "quality_score": 0.75 if row.get("curated_eligible", "false").casefold() == "true" else 0.45,
     }
 
 

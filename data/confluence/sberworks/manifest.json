@@ -1,0 +1,13 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-06-24T04:48:10.105902+00:00",
+  "source_id": "sberworks",
+  "mode": "offline-html",
+  "seed_url": "",
+  "counts": {
+    "pages": 5
+  },
+  "sha256": {
+    "pages.jsonl": "95e0fe46b93fb7cdede81d157e91395e930ddadee4c4e0abaf957e70dd2c55b0"
+  }
+}

@@ -10,8 +10,10 @@ from rag_assistant.settings import (
     DEFAULT_ARTIFACTS_ROOT,
     DEFAULT_CONFIG_PATHS,
     DEFAULT_DB_PATH,
+    DEFAULT_CONFLUENCE_OUTPUT_ROOT,
     DEFAULT_EMBEDDING_MODEL,
     DEFAULT_FINAL_K,
+    DEFAULT_IGNITE_FIREFIGHTER_KB_PATH,
     DEFAULT_JIRA_OUTPUT_ROOT,
     DEFAULT_KEYWORD_K,
     DEFAULT_OLLAMA_MODEL,
@@ -24,6 +26,7 @@ from rag_assistant.settings import (
 class PathsConfig:
     datagrid_docs: Path | None
     ignite_docs: Path | None
+    ignite_firefighter_kb: Path
     db_path: Path
     artifacts_root: Path
 
@@ -34,6 +37,12 @@ class JiraConfig:
     jql: str | None
     cert_path: Path | None
     output_root: Path
+
+
+@dataclass(frozen=True)
+class ConfluenceConfig:
+    output_root: Path
+    apache_seed_url: str
 
 
 @dataclass(frozen=True)
@@ -55,6 +64,7 @@ class AppConfig:
     config_path: Path | None
     paths: PathsConfig
     jira: JiraConfig
+    confluence: ConfluenceConfig
     ollama: OllamaConfig
     retrieval: RetrievalConfig
 
@@ -82,6 +92,11 @@ def load_config(path: Path | None = None) -> AppConfig:
     paths = PathsConfig(
         datagrid_docs=_optional_path(paths_raw.get("datagrid_docs"), base_dir=base_dir),
         ignite_docs=_optional_path(paths_raw.get("ignite_docs"), base_dir=base_dir),
+        ignite_firefighter_kb=_path_value(
+            paths_raw.get("ignite_firefighter_kb"),
+            base_dir=base_dir,
+            default=DEFAULT_IGNITE_FIREFIGHTER_KB_PATH,
+        ),
         db_path=db_path,
         artifacts_root=artifacts_root,
     )
@@ -97,6 +112,21 @@ def load_config(path: Path | None = None) -> AppConfig:
             default=artifacts_root / "jira" / "export"
             if artifacts_root != DEFAULT_ARTIFACTS_ROOT
             else DEFAULT_JIRA_OUTPUT_ROOT,
+        ),
+    )
+
+    confluence_raw = _section(raw, "confluence")
+    confluence = ConfluenceConfig(
+        output_root=_path_value(
+            confluence_raw.get("output_root"),
+            base_dir=base_dir,
+            default=artifacts_root / "confluence"
+            if artifacts_root != DEFAULT_ARTIFACTS_ROOT
+            else DEFAULT_CONFLUENCE_OUTPUT_ROOT,
+        ),
+        apache_seed_url=str(
+            confluence_raw.get("apache_seed_url")
+            or "https://cwiki.apache.org/confluence/display/IGNITE/Design+Documents"
         ),
     )
 
@@ -120,12 +150,17 @@ def load_config(path: Path | None = None) -> AppConfig:
         config_path=config_path,
         paths=paths,
         jira=jira,
+        confluence=confluence,
         ollama=ollama,
         retrieval=retrieval,
     )
 
 
-def source_path_for_type(config: AppConfig, source_type: str) -> Path | None:
+def source_path_for_type(
+    config: AppConfig,
+    source_type: str,
+    source_id: str | None = None,
+) -> Path | None:
     """Return configured source path for a supported source type."""
 
     if source_type == "datagrid-docs":
@@ -134,6 +169,15 @@ def source_path_for_type(config: AppConfig, source_type: str) -> Path | None:
         return config.paths.ignite_docs
     if source_type == "jira-snapshot":
         return config.jira.output_root / "latest" / "curated"
+    if source_type == "confluence-snapshot" and source_id:
+        return config.confluence.output_root / source_id / "latest"
+    if source_type in {
+        "ignite-firefighter-tree",
+        "ignite-firefighter-notes",
+        "stackoverflow-kb",
+        "ignite-user-mailing-list",
+    }:
+        return config.paths.ignite_firefighter_kb
     return None
 
 

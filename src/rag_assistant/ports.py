@@ -43,6 +43,9 @@ class VectorStore(Protocol):
     def list_documents(self) -> list[RagDocument]:
         """Return documents for the local lexical retrieval pass."""
 
+    def keyword_search(self, query: str, *, k: int) -> list[RagDocument]:
+        """Return BM25-ranked documents from the persistent lexical index."""
+
     def add_documents(
         self,
         documents: Sequence[RagDocument],

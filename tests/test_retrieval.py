@@ -4,6 +4,7 @@ from rag_assistant.retrieval import (
     hybrid_search,
     merge_candidates,
     rerank_candidates,
+    select_final_context,
     lexical_score,
     prefer_strong_incident_matches,
     tokenize,
@@ -101,6 +102,50 @@ def test_rerank_candidates_uses_metadata_matches():
     assert ranked[0][1] is metadata_match
 
 
+def test_rerank_prefers_authoritative_and_version_compatible_sources():
+    official = Doc(
+        "Ignite persistence behavior",
+        {
+            "chunk_id": "official",
+            "source_type": "ignite-docs",
+            "product_version": "2.17.0",
+        },
+    )
+    old_community = Doc(
+        "Ignite persistence behavior",
+        {
+            "chunk_id": "community",
+            "source_type": "stackoverflow-kb",
+            "product_version": "1.9.0",
+            "published_at": "2016-01-01",
+        },
+    )
+
+    ranked = rerank_candidates(
+        "Ignite 2.17.0 persistence behavior",
+        [
+            RetrievalCandidate(document=old_community),
+            RetrievalCandidate(document=official),
+        ],
+    )
+
+    assert ranked[0][1] is official
+
+
+def test_select_final_context_limits_one_record_and_diversifies_sources():
+    ranked = [
+        (10.0, Doc("a1", {"chunk_id": "a1", "record_id": "a", "source_type": "stackoverflow-kb"})),
+        (9.0, Doc("a2", {"chunk_id": "a2", "record_id": "a", "source_type": "stackoverflow-kb"})),
+        (8.0, Doc("a3", {"chunk_id": "a3", "record_id": "a", "source_type": "stackoverflow-kb"})),
+        (7.0, Doc("b", {"chunk_id": "b", "record_id": "b", "source_type": "ignite-docs"})),
+        (6.0, Doc("c", {"chunk_id": "c", "record_id": "c", "source_type": "ignite-firefighter-tree"})),
+    ]
+
+    selected = select_final_context(ranked, 4)
+
+    assert [document.metadata["chunk_id"] for document in selected] == ["a1", "a2", "b", "c"]
+
+
 def test_hybrid_search_uses_broad_candidate_pool_and_final_k():
     class Store:
         def __init__(self):
@@ -156,6 +201,21 @@ def test_hybrid_retriever_limit_controls_final_context_only():
     assert result[0].metadata["chunk_id"] == "wal"
 
 
+def test_keyword_search_prefers_store_persistent_index():
+    class Store:
+        def keyword_search(self, query, *, k):
+            return [Doc("persistent WAL", {"chunk_id": "persistent"})]
+
+        def list_documents(self):
+            raise AssertionError("full document scan must not run")
+
+    from rag_assistant.retrieval import keyword_search
+
+    result = keyword_search(Store(), "WAL", k=2)
+
+    assert result[0].metadata["chunk_id"] == "persistent"
+
+
 def test_append_sources_groups_same_source():
     class Doc:
         def __init__(self, source_id):
@@ -181,7 +241,7 @@ def test_incident_prompt_requires_section_citations():
     assert "гипотеза" in prompt
 
 
-def test_ensure_incident_section_citations_adds_fallback_to_bullets():
+def test_ensure_incident_section_citations_marks_uncited_bullets_without_false_source():
     class Doc:
         metadata = {"source_id": "3"}
 
@@ -198,9 +258,9 @@ Diagnostics
 
     updated = ensure_incident_section_citations(response, [Doc()])
 
-    assert "- Missing citation [3]" in updated
+    assert "- Missing citation [источник не указан]" in updated
     assert "- Already cited [2]" in updated
-    assert "1. Check logs [3]" in updated
+    assert "1. Check logs [источник не указан]" in updated
     assert "No citation here. [3]" not in updated
 
 

@@ -35,8 +35,11 @@ def inspect_source(
         "documents": len(documents),
         "chunks": len(chunks),
         "unique_chunk_ids": len(set(ids)),
+        "source_id": _counter(metadatas, "source_id", include_missing=False),
         "component": _counter(metadatas, "component"),
         "guide": _counter(metadatas, "guide"),
+        "record_type": _counter(metadatas, "record_type"),
+        "trust_tier": _counter(metadatas, "trust_tier"),
     }
 
 
@@ -50,8 +53,11 @@ def format_source_summary(summary: dict[str, Any]) -> str:
         f"Chunks: {summary['chunks']}",
         f"Unique chunk ids: {summary['unique_chunk_ids']}",
     ]
+    _append_counter(lines, "Source ids", summary.get("source_id") or {})
     _append_counter(lines, "Components", summary.get("component") or {})
     _append_counter(lines, "Guides", summary.get("guide") or {})
+    _append_counter(lines, "Record types", summary.get("record_type") or {})
+    _append_counter(lines, "Trust tiers", summary.get("trust_tier") or {})
     return "\n".join(lines)
 
 
@@ -74,8 +80,11 @@ def inspect_index(db_path: Path, *, sample_limit: int | None = None) -> dict[str
                 "count": count,
                 "sampled": len(metadatas),
                 "source_type": _counter(metadatas, "source_type"),
+                "source_id": _counter(metadatas, "source_id", include_missing=False),
                 "component": _counter(metadatas, "component"),
                 "guide": _counter(metadatas, "guide"),
+                "record_type": _counter(metadatas, "record_type"),
+                "trust_tier": _counter(metadatas, "trust_tier"),
             }
         )
 
@@ -101,14 +110,26 @@ def format_index_summary(summary: dict[str, Any]) -> str:
         if collection["sampled"] != collection["count"]:
             lines.append(f"Sampled metadata rows: {collection['sampled']}")
         _append_counter(lines, "Source types", collection.get("source_type") or {})
+        _append_counter(lines, "Source ids", collection.get("source_id") or {})
         _append_counter(lines, "Components", collection.get("component") or {})
         _append_counter(lines, "Guides", collection.get("guide") or {})
+        _append_counter(lines, "Record types", collection.get("record_type") or {})
+        _append_counter(lines, "Trust tiers", collection.get("trust_tier") or {})
 
     return "\n".join(lines)
 
 
-def _counter(metadatas: list[dict[str, Any]], key: str) -> dict[str, int]:
-    values = Counter(str(metadata.get(key) or "unknown") for metadata in metadatas)
+def _counter(
+    metadatas: list[dict[str, Any]],
+    key: str,
+    *,
+    include_missing: bool = True,
+) -> dict[str, int]:
+    values = Counter(
+        str(metadata.get(key) or "unknown")
+        for metadata in metadatas
+        if include_missing or metadata.get(key)
+    )
     return dict(values.most_common(12))
 
 

@@ -1,0 +1,3219 @@
+version: 1
+id: apache-ignite-troubleshooting
+title: Apache Ignite / Java high-memory troubleshooting decision tree
+language: ru
+description: >
+  Initial machine-readable troubleshooting knowledge base distilled from
+  dpavlov/ignite_checklist and the JPoint 2024 talk transcript. The tree is
+  intended to recommend the next diagnostic step from available facts.
+sources:
+  - id: gitverse-dpavlov-ignite-checklist
+    type: repository_readme
+    url: https://gitverse.ru/dpavlov/ignite_checklist
+    title: Заметки к докладу JPoint 2024 - Поиск проблем Java-приложения с 31G heap и 500G off-heap
+    retrieved_at: 2026-06-07
+  - id: local-jpoint-2024-subtitles
+    type: transcript
+    path: C:/Users/Дмитрий/Downloads/Дмитрий Павлов — Поиск проблем Java-приложения с 31G heap и 500G off-heap на примере Apache Ignite [Russian (auto-generated)] [DownloadYoutubeSubtitles.com].txt
+    title: Дмитрий Павлов — Поиск проблем Java-приложения с 31G heap и 500G off-heap на примере Apache Ignite
+    note: Auto-generated subtitles were decoded from mojibake and used only as contextual support.
+
+  - id: local-ignite-talks-subtitles-batch-20260607
+    type: transcript_batch
+    title: Additional Apache Ignite talk subtitles from local Downloads
+    retrieved_at: 2026-06-07
+    count: 16
+    note: >
+      Used as weak contextual evidence for architecture and operations patterns:
+      write throughput, DataStreamer, backups/write synchronization, affinity
+      and collocated compute, local indexes, near cache, topology changes,
+      failover, split-brain risk, rolling upgrades, and real-time latency.
+  - id: local-ignite2-youtube-transcripts-temp-20260607
+    type: normalized_transcript_corpus
+    title: Russian and English YouTube transcripts about Apache Ignite 2 from local Downloads
+    retrieved_at: 2026-06-07
+    found_files: 27
+    unique_transcripts: 24
+    temp_path: C:/Tmp/ignite2-youtube-transcripts-python-20260607-160900
+    manifest: C:/Tmp/ignite2-youtube-transcripts-python-20260607-160900/manifest.json
+    note: >
+      Local corpus of already-downloaded YouTube subtitle text files. Exact
+      duplicates were deduplicated after text normalization. Used to extend
+      Ignite 2 recommendations around cloud deployment/discovery, client
+      topology, transactional workloads, SQL/index plans, binary marshalling,
+      and mixed real-time processing scenarios.
+  - id: english-ignite-youtube-expanded-20260607
+    type: normalized_transcript_corpus
+    title: Expanded English YouTube transcript corpus for Apache Ignite 2 / GridGain talks
+    retrieved_at: 2026-06-07
+    source_channels: 9
+    candidate_videos: 212
+    videos_with_transcripts: 199
+    unique_transcripts: 198
+    temp_path: C:/Tmp/ignite-english-youtube-transcripts-expanded-20260607
+    manifest: C:/Tmp/ignite-english-youtube-transcripts-expanded-20260607/manifest.json
+    discovery_notes:
+      - GridGain Systems channel videos and streams were scanned with yt-dlp metadata.
+      - YouTube search was used for Ignite Summit, IMC Summit, Databricks, Spark Summit, and ASF matches.
+      - Only English subtitles or auto-subtitles were converted to normalized text.
+    note: >
+      Used to extend recommendations around production readiness, tracing,
+      monitoring, data skew, native persistence and recovery, disaster recovery
+      and data-center replication, security, Spark/Flink/streaming integration,
+      CDC/schema migration, cloud deployments, and when Apache Ignite may be the
+      wrong tool for a workload.
+  - id: apache-ignite2-official-docs-20260607
+    type: documentation_set
+    title: Apache Ignite 2.x official troubleshooting and operations documentation
+    retrieved_at: 2026-06-07
+    urls:
+      - https://ignite.apache.org/docs/ignite2/latest/perf-and-troubleshooting/handling-exceptions
+      - https://ignite.apache.org/docs/ignite2/latest/tools/control-script
+      - https://ignite.apache.org/docs/ignite2/latest/monitoring-metrics/system-views
+      - https://ignite.apache.org/docs/ignite2/latest/persistence/native-persistence
+      - https://ignite.apache.org/docs/ignite2/latest/persistence/change-data-capture
+    note: >
+      Used to add official diagnostics around critical failure handlers,
+      blocked system workers, CacheInvalidStateException/lost partitions,
+      transaction/contention control commands, system views, consistency checks,
+      SQL index validation, tracing configuration, and WAL durability semantics.
+  - id: gridgain8-official-docs-20260607
+    type: documentation_set
+    title: GridGain 8.x official troubleshooting and operations documentation
+    retrieved_at: 2026-06-07
+    urls:
+      - https://www.gridgain.com/docs/gridgain8/latest/perf-troubleshooting-guide/troubleshooting
+      - https://www.gridgain.com/docs/gridgain8/latest/perf-troubleshooting-guide/maintenance-mode
+      - https://www.gridgain.com/docs/gridgain8/latest/perf-troubleshooting-guide/monitoring-rebalance
+      - https://www.gridgain.com/docs/gridgain8/latest/administrators-guide/control-script
+      - https://www.gridgain.com/docs/gridgain8/latest/administrators-guide/snapshots/point-in-time-recovery
+      - https://www.gridgain.com/docs/gridgain8/latest/perf-troubleshooting-guide/persistence-tuning
+    note: >
+      Used to add more operational GridGain 8 checks: partition reconciliation
+      under load, idle_verify constraints, index rebuild/inline-size checks,
+      rebalance progress metrics, temporary persistence paths, maintenance mode,
+      corruption dumps, thin client session pressure, PITR WAL history gaps, and
+      COPY FROM native-library extraction failures.
+  - id: local-stackoverflow-ignite2-frequency-20260607
+    type: local_question_corpus
+    title: Local StackOverflow Apache Ignite answered-question frequency pass
+    retrieved_at: 2026-06-07
+    path: docs/kb/stackoverflow/answered-questions.combined.jsonl
+    question_count: 2082
+    top_problem_terms:
+      client: 779
+      SQL: 672
+      Spring: 399
+      discovery: 394
+      partition: 385
+      persistence: 384
+      index: 372
+      TcpDiscovery: 326
+      affinity: 226
+      timeout: 214
+      transaction: 214
+      communication: 209
+      snapshot: 141
+      thin_client: 138
+      slow: 109
+      BinaryObject: 108
+      WAL: 105
+      DataStreamer: 93
+      ClassNotFoundException: 76
+      checkpoint: 74
+      rebalance: 59
+      OOM: 51
+      baseline: 46
+      deadlock: 37
+      Kafka: 27
+    note: >
+      Used to bias additional Google/official-doc searches toward recurring
+      practical failures: client/discovery, SQL/indexes, Spring/cache stores,
+      partition/persistence, classpath/connectors, thin clients, and
+      transaction/contention.
+  - id: external-ignite-common-problems-search-20260607
+    type: documentation_search
+    title: External search pass for frequent Apache Ignite 2 / GridGain 8 problems
+    retrieved_at: 2026-06-07
+    urls:
+      - https://ignite.apache.org/docs/ignite2/latest/thin-clients/java-thin-client
+      - https://ignite.apache.org/docs/ignite2/latest/tools/control-script
+      - https://ignite.apache.org/docs/ignite2/latest/SQL/querying-data
+      - https://ignite.apache.org/docs/ignite2/latest/SQL/indexes
+      - https://ignite.apache.org/docs/ignite2/latest/data-modeling/data-partitioning
+      - https://ignite.apache.org/docs/ignite2/latest/extensions-and-integrations/spring/spring-caching
+      - https://ignite.apache.org/docs/ignite2/latest/persistence/external-storage
+      - https://ignite.apache.org/docs/ignite2/latest/events/continuous-queries
+      - https://ignite.apache.org/docs/ignite2/latest/extensions-and-integrations/kafka-streamer
+      - https://www.gridgain.com/docs/gridgain8/latest/perf-troubleshooting-guide/troubleshooting
+      - https://www.gridgain.com/docs/gridgain8/latest/developers-guide/thin-clients/getting-started-with-thin-clients
+    note: >
+      Used to add recommendations that are common in public problem reports but
+      were too weak in the tree: client partition awareness and slow-client
+      queues, Spring/cache-store/JDBC dialect behavior, connector classpath
+      packaging, continuous-query lifecycle under client churn, long-running SQL
+      and query-result materialization, and control-utility connectivity through
+      the client connector.
+  - id: local-cprojects-troubleshooting-notes-20260607
+    type: local_project_notes
+    title: Troubleshooting notes and diagnostic prototypes from neighboring C:/projects workspaces
+    retrieved_at: 2026-06-07
+    paths:
+      - C:/projects/ignite-risk-engine/docs/datagrid_troubleshooting4rag.md
+      - C:/projects/coordina/notes/obsidian/hypo/rebalance_heap_optimization_ideas.md
+      - C:/projects/coordina/notes/obsidian/goals/ignite-tx-network-resilience.md
+      - C:/projects/coordina/notes/obsidian/hypo/ignite-test-grid-lifecycle-diagnostics.md
+      - C:/projects/ignite-checker/src/main/java/ru/sbrf/ucpcloud/ignite/service/DiagnosticServiceImpl.java
+      - C:/projects/ignite-firefighter/docs/skills/ignite-failure-investigator/references/analyzer-improvement-seeds.md
+    note: >
+      Used to add local operational knowledge that was not explicit enough in
+      the current decision tree: binary metadata and affinity-key drift, Java 17
+      module-access failures, work-directory failures, system/volatile data
+      region OOM, custom global-index consistency checks, rebalance in-flight
+      heap pressure, stuck transactions after unstable network, config/version
+      drift, external callbacks, clock/window quality, and test grid lifecycle
+      diagnostics.
+  - id: hardware-host-infrastructure-enrichment-20260607
+    type: troubleshooting_pattern_set
+    title: Host hardware and infrastructure troubleshooting enrichment
+    retrieved_at: 2026-06-07
+    derived_from:
+      - C:/projects/ignite-firefighter/docs/skills/ignite-failure-investigator/references/analyzer-improvement-seeds.md
+      - C:/projects/ignite-firefighter/docs/kb/gc-collectors-troubleshooting.md
+      - C:/projects/ignite-firefighter/docs/kb/ignite-troubleshooting-tree.yaml
+    note: >
+      Added explicit host/hardware branches for cases where Ignite symptoms are
+      secondary to platform faults: CPU steal/throttling/run queue, thermal
+      throttling, NUMA/THP/cgroup limits, block-device/media/RAID/controller
+      problems, filesystem remount/corruption, NIC link/duplex/MTU/DNS issues,
+      time synchronization, file descriptor and ephemeral-port exhaustion, and
+      noisy-neighbor or hypervisor pressure.
+  - id: oracle-jfr-performance-troubleshooting
+    type: documentation
+    url: https://docs.oracle.com/en/java/javase/11/troubleshoot/troubleshoot-performance-issues-using-jfr.html
+    title: Troubleshoot Performance Issues Using Flight Recorder
+    retrieved_at: 2026-06-07
+    note: >
+      Used to structure JFR signals around automated analysis, thread-stalling
+      events, GC pause impact, synchronization, socket/file IO waits, allocation
+      pressure, and method profiling samples.
+  - id: oracle-jfr-recordingfile-api
+    type: api_documentation
+    url: https://docs.oracle.com/en/java/javase/11/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingFile.html
+    title: RecordingFile API
+    retrieved_at: 2026-06-07
+    note: >
+      Used to keep JFR analyzers streaming: read events with hasMoreEvents and
+      readEvent; avoid readAllEvents for large recordings.
+  - id: openjdk-jmc
+    type: project_documentation
+    url: https://github.com/openjdk/jmc
+    title: OpenJDK Mission Control
+    retrieved_at: 2026-06-07
+    note: >
+      Used as the reference tooling context for headless or UI-assisted JFR
+      analysis and JMC automated-analysis style output.
+
+fact_catalog:
+  incident.symptom:
+    description: User-facing symptom or incident entry point.
+    values:
+      - node_lost
+      - process_crash
+      - out_of_memory
+      - high_latency
+      - long_pause
+      - throughput_drop
+      - cluster_unavailable
+      - unknown
+  artifact.process_log.present:
+    description: Ignite or application process log is available for the incident window.
+    type: boolean
+  artifact.gc_log.present:
+    description: JVM GC log with timestamps/tags is available.
+    type: boolean
+  artifact.safepoint_log.present:
+    description: JVM safepoint log is available.
+    type: boolean
+  artifact.jfr.present:
+    description: JFR recording is available.
+    type: boolean
+  artifact.heap_dump.present:
+    description: Heap dump is available.
+    type: boolean
+  artifact.crash_dump.present:
+    description: JVM crash/error file is available.
+    type: boolean
+  artifact.os_logs.present:
+    description: Linux logs such as /var/log/messages or /var/log/dmesg are available.
+    type: boolean
+  artifact.nmon.present:
+    description: NMON logs are available.
+    type: boolean
+  config.jvm.options_known:
+    description: Effective JVM options at incident time are known.
+    type: boolean
+  config.linux.sysctl_known:
+    description: Linux sysctl values at incident time are known.
+    type: boolean
+  signal.log.error_or_exception:
+    description: Process log contains error or exception around the incident.
+    type: boolean
+  signal.jvm.oom:
+    description: Evidence of Java heap OOM, direct memory OOM, native OOM, or system OOM killer.
+    type: boolean
+  signal.jvm.crash:
+    description: JVM fatal error or crash dump is present.
+    type: boolean
+  signal.gc.long_pause:
+    description: GC log shows pauses above service target.
+    type: boolean
+  signal.gc.high_allocation_rate:
+    description: GC log or JFR shows allocation rate too high for target pause time.
+    type: boolean
+  signal.gc.large_live_set:
+    description: Heap occupancy or live histogram suggests many long-lived objects.
+    type: boolean
+  signal.gc.slow_termination:
+    description: G1 termination phase is disproportionately long.
+    type: boolean
+  signal.safepoint.slow_stopping_threads:
+    description: Safepoint log shows long Stopping threads time.
+    type: boolean
+  signal.jfr.recording_quality_limited:
+    description: JFR is present but key event types, stack traces, or useful thresholds are missing for the incident question.
+    type: boolean
+  signal.jfr.cpu_hot_methods:
+    description: JFR method profiling samples are concentrated in a small set of methods or Ignite subsystems.
+    type: boolean
+  signal.jfr.thread_stalling_high:
+    description: JFR Java Application duration events show important threads spending significant time not executing application code.
+    type: boolean
+  signal.jfr.lock_contention:
+    description: JFR JavaMonitorEnter or related synchronization events show important threads blocked on monitors or locks.
+    type: boolean
+  signal.jfr.socket_io_wait:
+    description: JFR SocketRead or SocketWrite events show significant wait time, tiny payloads with long latency, or problematic remote endpoints.
+    type: boolean
+  signal.jfr.file_io_wait:
+    description: JFR FileRead, FileWrite, or FileForce events show significant wait time or storage-path concentration.
+    type: boolean
+  signal.jfr.gc_pause_impact:
+    description: JFR GarbageCollection or GC phase events show high total pause impact or long individual pauses.
+    type: boolean
+  signal.jfr.exception_storm:
+    description: JFR exception statistics or throw events show unusually high exception creation rate or repeated exception sites.
+    type: boolean
+  signal.os.memory_pressure:
+    description: Monitoring or OS logs show physical memory pressure, swap, or OOM killer risk.
+    type: boolean
+  signal.os.disk_pressure:
+    description: Monitoring/NMON shows high disk latency, saturation, low free space, or dirty writeback pressure.
+    type: boolean
+  signal.os.network_pressure:
+    description: Monitoring shows network saturation, errors, or drops.
+    type: boolean
+  signal.ignite.region_pressure:
+    description: Ignite data region or unmanaged/off-heap memory is close to limit.
+    type: boolean
+  workload.write_heavy:
+    description: Incident or design review involves a heavy write/load workload.
+    type: boolean
+  workload.read_heavy:
+    description: Incident or design review involves a hot read workload.
+    type: boolean
+  workload.compute_colocated:
+    description: Workload expects compute to run near data or uses Ignite compute/map-reduce.
+    type: boolean
+  workload.mixed_realtime_and_batch:
+    description: Realtime traffic and batch/analytical/load traffic share the same cluster or cache path.
+    type: boolean
+  signal.write_throughput_low:
+    description: Write throughput is below expectation while resources or cluster size should allow more.
+    type: boolean
+  signal.query_fanout_high:
+    description: Query or compute request fans out to many partitions/nodes and latency grows with topology or key count.
+    type: boolean
+  signal.hot_key_or_partition:
+    description: Metrics or workload shape suggest a hot key, hot partition, or skewed affinity distribution.
+    type: boolean
+  signal.rebalance_or_topology_change:
+    description: Latency or availability issue correlates with node join/left, rebalance, baseline, or topology exchange.
+    type: boolean
+  signal.split_brain_or_segmentation:
+    description: Cluster nodes may see different topology views, often after network partition or DC link issues.
+    type: boolean
+  config.cache.backups_known:
+    description: Cache backup count is known for the affected cache.
+    type: boolean
+  config.cache.write_sync_known:
+    description: Cache write synchronization mode is known for the affected cache.
+    type: boolean
+  config.affinity_known:
+    description: Affinity keys, collocation strategy, and partition count are known.
+    type: boolean
+  config.persistence_enabled:
+    description: Ignite persistence or WAL/checkpoint behavior is enabled for the affected workload.
+    type: boolean
+  config.near_cache_enabled:
+    description: Near cache is enabled for hot client-side or cross-node reads.
+    type: boolean
+  deployment.cloud_or_containerized:
+    description: Ignite runs in a cloud, container, Kubernetes-like, or otherwise dynamic infrastructure.
+    type: boolean
+  config.discovery_known:
+    description: Discovery SPI, address provider, ports, and network reachability assumptions are known.
+    type: boolean
+  signal.discovery_or_communication_issue:
+    description: Logs or symptoms point to discovery failures, unstable membership, failed handshakes, or blocked TCP communication.
+    type: boolean
+  config.client_topology_known:
+    description: Thick/thin/client/server placement and failover behavior are known.
+    type: boolean
+  signal.client_failover_issue:
+    description: Clients lose connectivity, fail to reconnect, or observe topology differently from server nodes.
+    type: boolean
+  workload.transactional:
+    description: Affected workload uses Ignite transactions, account/payment-like updates, or cross-cache consistency.
+    type: boolean
+  signal.transaction_contention_or_timeout:
+    description: Logs or metrics suggest transaction lock contention, deadlock, timeout, or long commit/prepare phases.
+    type: boolean
+  signal.sql_query_slow:
+    description: SQL query latency is high or query throughput is below expectation.
+    type: boolean
+  config.query_plan_available:
+    description: SQL query plan or equivalent execution-shape evidence is available.
+    type: boolean
+  signal.binary_marshalling_overhead:
+    description: Profiling or benchmark data suggests serialization, BinaryObject conversion, schema, or marshalling overhead.
+    type: boolean
+  signal.checkpoint_or_wal_pressure:
+    description: Persistence, WAL, checkpoint, fsync, or page-store activity correlates with latency or throughput loss.
+    type: boolean
+  artifact.tracing.present:
+    description: Distributed tracing, transaction traces, or request-level spans are available.
+    type: boolean
+  signal.data_skew:
+    description: Cache, partition, primary ownership, SQL, or compute load is unevenly distributed.
+    type: boolean
+  workload.spark_or_flink_integration:
+    description: Affected workload integrates Ignite with Spark, Flink, or another external stream/batch engine.
+    type: boolean
+  signal.external_connector_backpressure:
+    description: Backpressure, lag, or retries appear at an external connector boundary such as Spark, Flink, Kafka, CDC, or JDBC.
+    type: boolean
+  config.disaster_recovery_known:
+    description: Backup, restore, data center replication, and recovery point/time objectives are known.
+    type: boolean
+  signal.dcr_replication_lag:
+    description: Data center replication, multisite deployment, or cross-region synchronization lags or fails.
+    type: boolean
+  config.security_enabled:
+    description: Authentication, authorization, TLS/SSL, or plugin security is enabled.
+    type: boolean
+  signal.security_handshake_or_auth_issue:
+    description: Logs suggest TLS handshake, certificate, authentication, authorization, or security plugin failures.
+    type: boolean
+  config.memory_regions_known:
+    description: Data region sizes, persistence mode, checkpoint buffer, eviction, and page memory settings are known.
+    type: boolean
+  signal.cdc_or_schema_migration_issue:
+    description: CDC, schema migration, rolling schema changes, or cluster-to-cluster migration is slow or failing.
+    type: boolean
+  workload.unsuitable_for_ignite:
+    description: Workload shape may be a poor fit for Ignite compared with a simpler database/cache/queue/search system.
+    type: boolean
+  artifact.control_utility.available:
+    description: control.sh/control.bat can connect to the affected cluster or a representative node.
+    type: boolean
+  artifact.system_views.present:
+    description: Ignite system views, JMX, SQL system views, or control-script diagnostics are available for the incident window.
+    type: boolean
+  config.failure_handler_known:
+    description: Failure handler policy and critical system-worker diagnostics are known.
+    type: boolean
+  signal.system_worker_blocked:
+    description: Logs or failure handler output indicate a blocked, terminated, or failed critical Ignite system worker.
+    type: boolean
+  signal.cache_invalid_state_or_lost_partitions:
+    description: CacheInvalidStateException, lost partitions, or partition-loss state appears in logs or control utility output.
+    type: boolean
+  config.partition_loss_policy_known:
+    description: Cache partition loss policy and operational recovery/reset procedure are known.
+    type: boolean
+  signal.partition_consistency_conflict:
+    description: idle_verify, partition_reconciliation, or related checks report data inconsistency between primary and backup partitions.
+    type: boolean
+  signal.index_consistency_issue:
+    description: validate_indexes, index validation, or query symptoms suggest damaged or inconsistent SQL indexes.
+    type: boolean
+  signal.index_inline_size_mismatch:
+    description: Index inline size differs across nodes or changed in a way that requires index rebuild.
+    type: boolean
+  signal.rebalance_stalled:
+    description: Rebalance remains in progress, makes no visible progress, or dominates network/disk/CPU for too long.
+    type: boolean
+  config.work_persistence_paths_known:
+    description: Ignite work directory, storage paths, WAL paths, WAL archive paths, and temp-directory usage are known.
+    type: boolean
+  signal.persistence_files_missing_after_restart:
+    description: Persistent data disappeared or changed after restart, often due to temp-directory work path or wrong storage paths.
+    type: boolean
+  signal.maintenance_mode_or_corruption:
+    description: Node enters maintenance mode or logs mention corrupted persistence, WAL, or partition files.
+    type: boolean
+  signal.thin_client_session_pressure:
+    description: Large thin-client session count, reconnect storms, or thin-client memory pressure is suspected.
+    type: boolean
+  signal.pitr_wal_history_gap:
+    description: Point-in-time recovery or restore cannot find required WAL history or snapshot/WAL chain is incomplete.
+    type: boolean
+  signal.copy_from_native_library_failure:
+    description: COPY FROM or CSV load fails because native compression libraries cannot be extracted or executed.
+    type: boolean
+  signal.classpath_or_dependency_issue:
+    description: Logs show ClassNotFoundException, NoClassDefFoundError, missing optional module, connector packaging, or incompatible dependency versions.
+    type: boolean
+  signal.peer_class_loading_or_deployment_issue:
+    description: Compute, services, events, or remote execution fail because peer class loading, deployment, or class availability differs by node.
+    type: boolean
+  workload.spring_or_cache_store:
+    description: Workload uses Spring Cache, Spring Data, IgniteRepository, CacheStore, read-through/write-through, or external JDBC storage.
+    type: boolean
+  signal.cache_store_jdbc_dialect_issue:
+    description: CacheStore/JDBC integration fails due to dialect, generated upsert/update SQL, unsupported database operation, or write-behind behavior.
+    type: boolean
+  workload.continuous_queries:
+    description: Workload uses continuous queries, remote filters, or event/listener streams.
+    type: boolean
+  signal.continuous_query_lifecycle_issue:
+    description: Continuous queries stop, leak, duplicate events, or stall during client shutdown, reconnect, or topology churn.
+    type: boolean
+  config.thin_client_partition_awareness_known:
+    description: Thin client partition awareness, address list, load balancer behavior, and client/server version compatibility are known.
+    type: boolean
+  signal.slow_client_outbound_queue:
+    description: Logs or metrics show slow client warnings, outbound message queue growth, or client-side backpressure.
+    type: boolean
+  signal.query_result_materialization_pressure:
+    description: Query produces a very large result set, high page-fetch pressure, memory pressure, or long-running scan/system-view evidence.
+    type: boolean
+  signal.datastreamer_backpressure_or_flush_issue:
+    description: DataStreamer throughput, flush, buffer, per-node parallelism, or receiver behavior causes stalls or high memory usage.
+    type: boolean
+  config.control_utility_client_connector_known:
+    description: Client connector settings needed by control utility and thin-client protocol diagnostics are known.
+    type: boolean
+  signal.version_or_protocol_mismatch:
+    description: Client, connector, extension, or node versions are incompatible or use different protocol expectations.
+    type: boolean
+  signal.binary_metadata_affinity_conflict:
+    description: BinaryObjectException or logs show conflicting binary metadata, affinity-key fields, QueryEntity schema, or stale local metadata.
+    type: boolean
+  signal.java_module_access_issue:
+    description: IgniteUtils initialization, InaccessibleObjectException, or reflective-access errors suggest missing Java module --add-opens flags.
+    type: boolean
+  signal.work_directory_access_issue:
+    description: Logs show failure to create or use Ignite work directory, storage path, WAL path, or local metadata directory.
+    type: boolean
+  signal.system_data_region_oom:
+    description: IgniteOutOfMemoryException points to system or volatile data region rather than a user data region.
+    type: boolean
+  signal.config_drift_across_nodes:
+    description: Ignite, JVM, cache, data-region, discovery, communication, or deployment configuration differs unexpectedly across nodes.
+    type: boolean
+  signal.external_dependency_in_callback:
+    description: CacheStore, listener, compute, streamer receiver, continuous-query filter, or callback waits on external service/database/network calls.
+    type: boolean
+  signal.clock_skew_or_timestamp_mismatch:
+    description: Artifact timestamps, node clocks, time zones, or log formats prevent reliable cross-node correlation.
+    type: boolean
+  signal.rebalance_heap_allocation_pressure:
+    description: Rebalance demand/supply path shows high heap allocation, large in-flight batches, byte-array churn, or received-but-not-applied batches.
+    type: boolean
+  signal.tx_stuck_prepared_after_network:
+    description: Transaction remains prepared/in-doubt/stuck after network timeout, lost finish request, or partition-map exchange instability.
+    type: boolean
+  signal.global_index_consistency_issue:
+    description: Custom/global secondary index data is missing, stale, inaccessible on some nodes, or disagrees with primary storage.
+    type: boolean
+  workload.test_or_ci_grid_lifecycle:
+    description: Troubleshooting target is Ignite test/CI runtime rather than production traffic, especially repeated startGrid/stopGrid lifecycle.
+    type: boolean
+  signal.grid_lifecycle_overhead:
+    description: Test or CI time is dominated by grid startup, shutdown, persistence cleanup, checkpoint/WAL/snapshot teardown, or fixture setup.
+    type: boolean
+  signal.os.cpu_throttling_or_steal:
+    description: Host metrics show CPU steal, cgroup CPU throttling, long run queue, or CPU quota pressure.
+    type: boolean
+  signal.os.thermal_or_power_throttling:
+    description: Hardware, firmware, or OS telemetry suggests thermal throttling, power caps, or reduced CPU frequency.
+    type: boolean
+  signal.os.numa_or_thp_issue:
+    description: NUMA placement, remote memory access, Transparent Huge Pages, or memory compaction correlates with latency.
+    type: boolean
+  signal.os.cgroup_limit_pressure:
+    description: Container/cgroup CPU, memory, PID, IO, or network limits are hit or close to saturation.
+    type: boolean
+  signal.disk.media_or_controller_error:
+    description: OS logs report disk media errors, controller resets, I/O timeouts, SMART/NVMe warnings, RAID degradation, or path failover.
+    type: boolean
+  signal.disk.filesystem_corruption_or_remount:
+    description: Filesystem errors, journal aborts, read-only remounts, inode exhaustion, or metadata corruption appear in OS logs.
+    type: boolean
+  signal.disk.write_cache_or_flush_issue:
+    description: WAL/checkpoint fsync latency suggests disabled write cache, volatile cache without protection, controller cache problems, or slow flushes.
+    type: boolean
+  signal.network.nic_link_or_driver_issue:
+    description: NIC link flaps, driver/firmware errors, drops, overruns, retransmits, CRC errors, or duplex/speed mismatch are present.
+    type: boolean
+  signal.network.mtu_or_fragmentation_issue:
+    description: Packet loss or communication failures correlate with MTU mismatch, fragmentation, jumbo frames, or PMTU black holes.
+    type: boolean
+  signal.network.dns_or_name_resolution_issue:
+    description: DNS, reverse DNS, hostname, service discovery, or address resolution delays affect clients or cluster communication.
+    type: boolean
+  signal.os.time_sync_issue:
+    description: NTP/PTP drift, clock steps, leap changes, or large cross-node clock skew affects correlation, discovery, TLS, or timeouts.
+    type: boolean
+  signal.os.fd_or_ephemeral_port_exhaustion:
+    description: File descriptor, socket, PID, thread, conntrack, or ephemeral-port limits are exhausted or near exhaustion.
+    type: boolean
+  signal.infrastructure.noisy_neighbor:
+    description: VM, hypervisor, shared storage, shared network, or co-located workload pressure explains intermittent resource starvation.
+    type: boolean
+  marker.ignite_log.error_line:
+    description: Filtered Ignite log events contain ERROR-level lines; map to signal.log.error_or_exception and inspect the exact error class/message before treating it as root cause.
+    type: boolean
+  marker.ignite_log.warning_line:
+    description: Filtered Ignite log events contain WARN-level lines after the incident-window filter.
+    type: boolean
+  marker.ignite_log.warning_without_big_result_sets:
+    description: Filtered Ignite log warnings remain after removing query big-result-set noise.
+    type: boolean
+  marker.ignite_log.warning_without_big_results_or_unknown_plugin:
+    description: Filtered Ignite log warnings remain after removing query big-result-set and unknown-plugin noise.
+    type: boolean
+  marker.ignite_log.jvm_pause_detector:
+    description: Ignite jvm-pause-detector-worker logged Possible too long JVM pause events; map to signal.gc.long_pause, signal.safepoint.slow_stopping_threads, or host-level stall candidates after correlating GC/JFR/NMON.
+    type: boolean
+  marker.ignite_log.long_running_transactions:
+    description: Ignite diagnostic output reported long running transactions, for example First 10 long running transactions; map to signal.transaction_contention_or_timeout.
+    type: boolean
+  marker.ignite_log.pme_started:
+    description: Ignite exchange logs contain Started exchange init / partition-map-exchange start markers; map to signal.rebalance_or_topology_change.
+    type: boolean
+  marker.ignite_log.pme_finished:
+    description: Ignite exchange logs contain exchange completion or longest-local-stage markers; map to signal.rebalance_or_topology_change and inspect stage durations.
+    type: boolean
+  marker.ignite_log.rebalance_started:
+    description: Ignite logs contain Starting rebalance routine markers with cache group, supplier, topology version, and full/historical partition sets.
+    type: boolean
+  marker.ignite_log.rebalance_finished:
+    description: Ignite logs contain Completed rebalance future markers with cache group, bytes, keys, partitions, timing, and result.
+    type: boolean
+  marker.ignite_log.discovery_new_next_node:
+    description: TcpDiscoverySpi logged New next node, indicating discovery ring successor changes; correlate with node joins/leaves and communication instability.
+    type: boolean
+  marker.ignite_log.discovery_failed_to_send_to_next_node:
+    description: TcpDiscoverySpi failed to send a discovery message to the next ring node; map to signal.discovery_or_communication_issue and network fault candidates.
+    type: boolean
+  marker.ignite_log.discovery_no_connection_to_next_nodes:
+    description: TcpDiscoverySpi reported inability to connect to next nodes in the ring and possible local connectivity issues.
+    type: boolean
+  marker.ignite_log.node_failed_event:
+    description: Ignite topology/discovery output includes NODE_FAILED event markers.
+    type: boolean
+  marker.ignite_log.local_node_segmented:
+    description: Ignite discovery/failure-handler logs report local node segmentation; map to signal.split_brain_or_segmentation and signal.discovery_or_communication_issue.
+    type: boolean
+  marker.ignite_log.system_critical_thread_blocked:
+    description: Ignite logs report blocked system-critical thread or critical system-worker timeout, such as grid-timeout-worker or db-checkpoint-thread.
+    type: boolean
+  marker.ignite_log.failure_handler_segmentation:
+    description: Ignite failure handler logs report SEGMENTATION and immediate halt/stop handling.
+    type: boolean
+
+action_catalog:
+  collect_incident_context:
+    title: Собрать контекст инцидента
+    kind: collect
+    details:
+      - Fix the incident time window and affected nodes.
+      - Capture symptom, recent changes, workload shape, and SLO impact.
+  collect_process_logs:
+    title: Собрать журналы процесса
+    kind: collect
+    details:
+      - Collect Ignite/application logs for at least 3 days or the full incident window.
+      - Search for error, exception, node left/failed, exchange, timeout, and rebalance messages.
+  collect_os_logs:
+    title: Собрать Linux-журналы
+    kind: collect
+    details:
+      - Collect /var/log/messages and /var/log/dmesg.
+      - Check OOM killer, disk errors, NIC errors, kernel stalls, and service restarts.
+  collect_monitoring:
+    title: Собрать мониторинг
+    kind: collect
+    details:
+      - Collect workload metrics such as put/get/tx rates for Ignite.
+      - Collect CPU, physical memory, disk latency/usage/free space, network load, heap, and Ignite region usage.
+      - Include Ignite system views, JMX metrics, and control utility output when available.
+  collect_jvm_artifacts:
+    title: Собрать JVM-артефакты
+    kind: collect
+    details:
+      - Collect GC logs, safepoint logs, JFR, heap dumps, crash dumps, and effective JVM options.
+  inspect_jvm_options:
+    title: Проверить JVM options
+    kind: inspect
+    details:
+      - Verify fixed heap sizing with -Xmx and -Xms equal where applicable.
+      - Verify diagnostic outputs are configured under /opt/ignite/logs/diag or another predictable path.
+      - Verify GC, safepoint, JFR, heap dump, and crash dump options are present.
+  enable_diagnostics:
+    title: Включить базовую диагностику JVM
+    kind: remediate
+    details:
+      - Add GC logging with rotation.
+      - Add safepoint logging with rotation.
+      - Add JFR continuous recording with repository and dump-on-exit.
+      - Add HeapDumpOnOutOfMemoryError, ExitOnOutOfMemoryError, and ErrorFile.
+  inspect_linux_settings:
+    title: Проверить Linux-настройки
+    kind: inspect
+    details:
+      - Verify swap policy and overcommit settings.
+      - Check file descriptor limits, dirty page thresholds, and writeback timings.
+      - Check THP, NUMA, cgroup limits, CPU throttling, file descriptor limits, and time synchronization when host-level symptoms are present.
+  analyze_heap_dump:
+    title: Анализировать heap dump или live histogram
+    kind: analyze
+    details:
+      - Use heap dump when available.
+      - If heap dump is unavailable and process is alive, collect jmap -histo:live or jcmd GC.class_histogram.
+      - Identify top retained object types and correlate with workload or Ignite region usage.
+  analyze_gc_log:
+    title: Анализировать GC log
+    kind: analyze
+    details:
+      - Check pause distribution, allocation rate, live set, humongous allocations, and G1 phase timings.
+      - Use Azul GC Log Analyzer or equivalent tooling.
+  analyze_safepoint_log:
+    title: Анализировать safepoint log
+    kind: analyze
+    details:
+      - Separate total VM operation time from time spent stopping threads.
+      - If Stopping threads is large, inspect threads that do not reach safepoint quickly.
+  analyze_jfr:
+    title: Анализировать JFR
+    kind: analyze
+    details:
+      - Use Java Mission Control or `ignff analyze-jfr` JSON output.
+      - First verify recording quality: duration, incident-window coverage, enabled event types, stack traces, and thresholds.
+      - Treat absent events carefully; thresholds can hide short file IO, socket IO, synchronization, or park events.
+      - Correlate allocation, CPU samples, thread-stalling events, file IO, socket IO, GC pauses, safepoints, and exceptions with incident time.
+      - Prefer time-bucketed summaries before ranking top sites, so spikes can be matched to logs and monitoring.
+      - Do not enable heap statistics for latency profiling unless leak/live-set analysis is the goal; it can add old GC pauses.
+      - For large recordings, stream events instead of loading all events into memory.
+  analyze_disk:
+    title: Проверить диск
+    kind: analyze
+    details:
+      - Inspect disk utilization, latency, queueing, free space, and filesystem/kernel messages.
+      - Correlate node hangs and pauses with storage spikes.
+      - Check for media errors, controller resets, RAID degradation, filesystem remounts, and write-cache/flush behavior before tuning WAL or checkpoint settings.
+  analyze_network:
+    title: Проверить сеть
+    kind: analyze
+    details:
+      - Inspect throughput, packet drops, retransmits, interface errors, and inter-node latency.
+      - Check NIC link state, negotiated speed/duplex, MTU consistency, DNS latency, and cross-DC path quality.
+  inspect_ignite_memory_regions:
+    title: Проверить Ignite data regions/off-heap
+    kind: analyze
+    details:
+      - Inspect data region usage and unmanaged memory pressure.
+      - Correlate pressure with workload, rebalance, persistence, and eviction behavior.
+  tune_g1_for_large_live_set:
+    title: Рассмотреть G1-настройки для большого live set
+    kind: remediate
+    details:
+      - Consider -XX:G1MaxNewSizePercent=5 when many long-lived objects dominate.
+      - Consider disabling adaptive IHOP and setting InitiatingHeapOccupancyPercent around 30 after validation.
+  tune_g1_threads:
+    title: Рассмотреть уменьшение ParallelGCThreads
+    kind: remediate
+    details:
+      - If G1 termination is long on large CPU hosts, validate a lower ParallelGCThreads value such as CPUs/4.
+  tune_safepoint_timeout:
+    title: Включить safepoint timeout diagnostics
+    kind: remediate
+    details:
+      - Add -XX:+SafepointTimeout and -XX:SafepointTimeoutDelay=500 when stopping threads is significant.
+  investigate_os_scheduling:
+    title: Проверить, получало ли приложение CPU-квант
+    kind: analyze
+    details:
+      - If JVM appears not to execute while no GC/safepoint work explains the pause, inspect host-wide CPU saturation and noisy neighbors.
+  analyze_write_path:
+    title: Analyze Ignite write path
+    kind: analyze
+    details:
+      - Identify whether writes use cache put/putAll, DataStreamer, SQL, transactions, or custom compute.
+      - Measure batch size, flush cadence, client/server placement, partition distribution, and backpressure.
+      - Correlate throughput with backups, write synchronization mode, persistence, WAL, and checkpoints.
+  recommend_data_streamer:
+    title: Prefer DataStreamer for bulk/high-throughput loads
+    kind: remediate
+    details:
+      - For heavy ingestion, validate DataStreamer before optimizing per-entry cache puts.
+      - Tune buffer size, flush frequency, parallelism, and allowOverwrite according to the load pattern.
+      - Confirm that streamer memory buffering does not hide downstream bottlenecks.
+  inspect_cache_durability:
+    title: Inspect cache durability and replication cost
+    kind: inspect
+    details:
+      - Check backups, atomicity mode, write synchronization mode, persistence, WAL, and checkpoint settings.
+      - State the reliability/throughput tradeoff explicitly before changing settings.
+      - Compare behavior under node loss and network partition, not only under happy-path load.
+  inspect_affinity_collocation:
+    title: Inspect affinity and collocation
+    kind: inspect
+    details:
+      - Verify affinity keys and whether related data is colocated on the same primary partitions.
+      - For compute/map-reduce, prefer executing work on nodes that own the required data.
+      - Watch for fanout across many keys or partitions when a request appears local at business level.
+  inspect_query_indexes:
+    title: Inspect indexes and local query shape
+    kind: inspect
+    details:
+      - Check whether slow local lookups need indexes or a different key model.
+      - Distinguish point reads, partition-local scans, distributed SQL, and analytical fanout.
+      - Confirm that index maintenance cost is acceptable for the write workload.
+  inspect_near_cache:
+    title: Consider near cache for hot reads
+    kind: remediate
+    details:
+      - Use near cache only for repeatedly read, relatively stable hot data.
+      - Validate invalidation/update behavior and memory overhead.
+      - Do not use near cache to mask missing collocation or excessive fanout without measuring.
+  inspect_topology_rebalance:
+    title: Inspect topology exchange and rebalance
+    kind: analyze
+    details:
+      - Correlate latency and throughput drops with node joins/leaves, baseline changes, partition map exchange, and rebalance.
+      - Check whether persistence and WAL/checkpoints amplify rebalance pressure.
+      - Verify partition loss policy and operational procedures for planned maintenance.
+      - Capture rebalance progress and partition distribution instead of inferring rebalance health only from logs.
+  inspect_failover_split_brain:
+    title: Inspect failover and split-brain risk
+    kind: analyze
+    details:
+      - Check whether nodes had inconsistent topology views during network partition or DC link loss.
+      - Verify discovery SPI, segmentation policy, backups, and client failover behavior.
+      - Test rolling upgrade and single-node failure separately from network partition scenarios.
+  separate_mixed_workloads:
+    title: Separate or throttle mixed workloads
+    kind: remediate
+    details:
+      - Identify realtime, batch load, compute, and analytical traffic sharing the same cluster resources.
+      - Isolate workloads by cache, node filter, cluster, service placement, or throttling where needed.
+      - Protect realtime latency from bulk load and analytical fanout.
+  validate_capacity_model:
+    title: Validate capacity and benchmark model
+    kind: analyze
+    details:
+      - Compare expected operation rate, latency target, data volume, partitions, backups, and node count.
+      - Reproduce the workload with representative key distribution and failure modes.
+      - Track both business metrics and technical metrics before changing topology or cache settings.
+  inspect_cloud_discovery:
+    title: Inspect Ignite discovery in cloud or dynamic infrastructure
+    kind: inspect
+    details:
+      - Verify discovery SPI, address provider, TCP ports, NAT/firewall rules, pod or VM lifecycle, and stable node identity.
+      - Correlate discovery warnings with node joins/leaves, exchange storms, and client reconnects.
+      - In Kubernetes-like environments, check service DNS, readiness/liveness behavior, and whether restarts trigger unwanted topology churn.
+  inspect_client_topology:
+    title: Inspect client topology and failover behavior
+    kind: inspect
+    details:
+      - Identify thick clients, thin clients, server nodes, embedded clients, and service nodes separately.
+      - Check reconnect settings, partition awareness, address lists, load balancers, and how clients react to rolling restart or node loss.
+      - Compare client-observed topology with server topology during the incident window.
+  analyze_transactions:
+    title: Analyze transactional workload
+    kind: analyze
+    details:
+      - Identify transaction concurrency mode, isolation, timeout, touched caches, affinity keys, and number of partitions involved.
+      - Look for lock contention, deadlocks, long prepare/commit, retries, and cross-partition or cross-node transaction fanout.
+      - Use control utility transaction and contention diagnostics when the process is alive.
+      - For payment/account workloads, validate idempotency and failure handling before changing consistency settings.
+  inspect_sql_plan:
+    title: Inspect SQL query plan and index usage
+    kind: inspect
+    details:
+      - Capture the SQL text, query plan, parameters, target caches/tables, indexes, and distributed join behavior.
+      - Distinguish point lookup, colocated join, distributed join, partition-local scan, and full cluster scan.
+      - If results are wrong or errors mention indexes, run index validation before adding or dropping indexes.
+      - Balance any new index against write-path cost and memory overhead.
+  inspect_binary_marshalling:
+    title: Inspect binary marshalling and object conversion overhead
+    kind: analyze
+    details:
+      - Profile serialization, deserialization, BinaryObject usage, schema evolution, reflection, and custom marshallers.
+      - Compare benchmark results for primitive fields, binary objects, POJOs, SQL rows, and client protocol path.
+      - Watch for object copies on cache put/get, streamer load, SQL conversion, and compute task boundaries.
+  analyze_wal_checkpoint_pressure:
+    title: Analyze WAL and checkpoint pressure
+    kind: analyze
+    details:
+      - Correlate WAL fsync, checkpoint duration, page writes, dirty pages, and storage latency with application pauses.
+      - Check checkpoint buffer, WAL archive, disk bandwidth, disk free space, and persistence configuration.
+      - Verify WAL mode, WAL archive retention, historical rebalance eligibility, and whether fsync latency matches checkpoint spikes.
+      - Separate persistence pressure from GC and network symptoms before tuning cache durability.
+  inspect_tracing_monitoring:
+    title: Inspect tracing and monitoring evidence
+    kind: inspect
+    details:
+      - Collect distributed traces, transaction traces, long-running query traces, request IDs, and correlated metrics when available.
+      - Use tracing to split client time, network time, lock wait, SQL execution, compute execution, and storage/checkpoint time.
+      - If tracing is missing, recommend enabling it for repeat incidents before making speculative configuration changes.
+  analyze_data_skew:
+    title: Analyze data and workload skew
+    kind: analyze
+    details:
+      - Check partition size distribution, primary ownership, key distribution, hot keys, cache entry counts, and node-level CPU/IO imbalance.
+      - Correlate skew with SQL plans, affinity keys, compute jobs, streamer loads, and rebalance history.
+      - Consider repartitioning, affinity-key changes, salting, or workload throttling only after measuring skew.
+  inspect_external_streaming_integration:
+    title: Inspect Spark/Flink/Kafka/CDC integration boundary
+    kind: inspect
+    details:
+      - Identify connector type, batching, checkpointing, backpressure, retry policy, and exactly-once/idempotency assumptions.
+      - Correlate external engine lag with Ignite streamer, cache, transaction, WAL, and checkpoint metrics.
+      - Separate connector bottlenecks from Ignite cluster bottlenecks before changing cache settings.
+  inspect_disaster_recovery:
+    title: Inspect backup, recovery, and data-center replication
+    kind: inspect
+    details:
+      - Verify backup/restore procedure, recovery time objective, recovery point objective, DCR topology, and consistency expectations.
+      - Correlate cross-site lag with network, checkpoint, WAL archive, rebalance, and conflict-resolution behavior.
+      - Test restore and failover paths; do not rely on backup configuration alone.
+  inspect_security_configuration:
+    title: Inspect Ignite security configuration
+    kind: inspect
+    details:
+      - Check TLS certificates, trust stores, authentication, authorization, security plugin configuration, and client/server compatibility.
+      - Correlate handshake/auth failures with node join, client reconnect, rolling restart, and certificate rotation.
+      - Treat security failures as topology and client-availability risks, not only configuration errors.
+  inspect_memory_region_configuration:
+    title: Inspect data region and page memory configuration
+    kind: inspect
+    details:
+      - Record data region sizes, persistence mode, checkpoint buffer, eviction policy, page size, and memory metrics.
+      - Compare heap, off-heap/page memory, OS memory, and disk checkpoint behavior for the same time window.
+      - Validate memory-region changes under representative load before changing production limits.
+  inspect_cdc_schema_migration:
+    title: Inspect CDC, schema migration, or cluster migration
+    kind: inspect
+    details:
+      - Identify migration path, source/target schema, CDC lag, snapshot/load phase, incremental phase, and cutover plan.
+      - Check schema compatibility, indexes, binary metadata, cache configuration drift, and cluster version differences.
+      - Validate rollback and dual-write/idempotency behavior before changing production data flow.
+  evaluate_ignite_fit:
+    title: Evaluate whether Ignite is the right tool for the workload
+    kind: analyze
+    details:
+      - Check whether the workload actually needs distributed in-memory data, affinity/collocated compute, SQL over cached data, or HTAP behavior.
+      - If requirements are simple cache, queue, document search, or single-node storage, compare against simpler systems.
+      - Use this as an architecture review branch, not as an incident root cause by itself.
+  collect_control_utility_and_system_views:
+    title: Collect control utility, JMX, and system-view evidence
+    kind: collect
+    details:
+      - Verify that control.sh/control.bat can connect to the cluster and capture state, baseline, cache, transaction, contention, and diagnostic output.
+      - Capture relevant system views through SQL/JMX/control tooling for nodes, caches, compute tasks, transactions, services, scan queries, and continuous queries.
+      - Treat missing control access as an observability gap before making topology, partition, or transaction changes.
+  inspect_failure_handler_critical_workers:
+    title: Inspect failure handler and critical system workers
+    kind: inspect
+    details:
+      - Check configured failure handler policy and logs for blocked system workers, failed system workers, critical errors, or segmentation handling.
+      - Correlate worker-block messages with long JVM pauses, checkpoint/WAL stalls, discovery communication, and host CPU or IO starvation.
+      - Preserve thread dumps and process logs before restarting a node terminated by a critical failure handler.
+  inspect_partition_loss_policy:
+    title: Inspect lost partitions and partition-loss policy
+    kind: inspect
+    details:
+      - Check cache partition loss policy, lost-partition list, baseline/topology history, and whether the cluster is allowed to read or write affected partitions.
+      - Use control utility diagnostics before resetting lost partitions; reset is an operational recovery step, not a consistency proof.
+      - Correlate lost partitions with node loss, split brain, persistence state, backups, and rebalance.
+  run_consistency_checks:
+    title: Run partition consistency checks
+    kind: analyze
+    details:
+      - Use idle_verify when the cluster can be made idle and partition_reconciliation when consistency must be checked under load.
+      - Compare primary and backup hashes, update counters, partition states, and reported conflicts before repair.
+      - After repair or reset, repeat the consistency check and capture the before/after report.
+  inspect_sql_index_consistency:
+    title: Inspect SQL index consistency and rebuild needs
+    kind: inspect
+    details:
+      - Run validate_indexes for affected caches/tables and compare reported index errors with query plans and failed SQL statements.
+      - Check index inline size consistency across nodes and rebuild indexes when inline-size or metadata changes require it.
+      - Distinguish damaged indexes from missing indexes and from distributed-query fanout.
+  inspect_rebalance_progress_metrics:
+    title: Inspect rebalance progress and bottlenecks
+    kind: inspect
+    details:
+      - Capture rebalance partitions left, bytes left, rates, supply/demand messages, and node-level disk/network/CPU during rebalance.
+      - Separate full rebalance from historical rebalance and identify whether WAL history is sufficient for the faster path.
+      - Correlate stalled rebalance with baseline changes, persistence, checkpoint pressure, throttling, and network loss.
+  inspect_persistence_paths_and_maintenance:
+    title: Inspect persistence paths, WAL files, and maintenance mode
+    kind: inspect
+    details:
+      - Verify work directory, storage path, WAL path, WAL archive path, and whether any persistent storage lives under an OS temp directory.
+      - If maintenance mode is active, capture maintenance task output and corruption diagnostics before deleting or moving files.
+      - For WAL or partition corruption, preserve dumps and logs before recovery actions.
+  inspect_thin_client_sessions:
+    title: Inspect thin client session pressure
+    kind: inspect
+    details:
+      - Count thin client sessions, reconnect loops, authentication failures, and per-client memory or thread pressure.
+      - Check address lists, partition awareness, load balancers, idle timeouts, and whether clients reconnect during topology changes.
+      - Reduce connection churn or fanout before tuning server memory limits.
+  inspect_pitr_wal_archive:
+    title: Inspect point-in-time recovery WAL history
+    kind: inspect
+    details:
+      - Verify snapshot timestamp, WAL archive retention, WAL segment continuity, and the target restore point.
+      - Treat a missing WAL chain as a restore-plan failure; do not assume the latest snapshot alone is enough for PITR.
+      - Capture restore command, snapshot metadata, and WAL archive state for repeatable recovery testing.
+  inspect_copy_from_native_library:
+    title: Inspect COPY FROM native-library extraction failure
+    kind: inspect
+    details:
+      - Check whether the JVM temp directory or configured temp path is mounted noexec or blocks native compression library extraction.
+      - Validate COPY FROM input, compression mode, temp path permissions, and native library loading before changing SQL or cache configuration.
+      - Prefer moving the temp path to an executable controlled directory over broad permission changes.
+  inspect_classpath_dependency_packaging:
+    title: Inspect Ignite classpath, modules, and connector packaging
+    kind: inspect
+    details:
+      - Identify every runtime classloader boundary: server nodes, thick clients, thin clients, Kafka Connect workers, Spring Boot fat jars, compute/service deployments, and optional Ignite modules.
+      - Match Ignite core, extensions, connector, Spring, Kafka, JDBC driver, and Java versions before treating ClassNotFoundException as an application bug.
+      - For connector runtimes, verify whether Ignite jars must be on the process classpath rather than only in a plugin path.
+  inspect_spring_cache_store_jdbc:
+    title: Inspect Spring, IgniteRepository, and CacheStore/JDBC behavior
+    kind: inspect
+    details:
+      - Identify whether the failure happens in Spring Cache abstraction, Spring Data IgniteRepository, CacheStore read/write-through, write-behind, or direct cache operations.
+      - Check generated SQL/upsert behavior, JDBC dialect, key/value field mapping, external database capabilities, and transaction/write-behind semantics.
+      - Distinguish repository API semantics from Ignite cache semantics before changing cache atomicity or persistence.
+  inspect_continuous_query_lifecycle:
+    title: Inspect continuous query lifecycle and client churn
+    kind: inspect
+    details:
+      - Record continuous query registrations, remote filters, listener nodes, buffer/interval settings, and whether queries are started from client nodes.
+      - Correlate stalls or duplicate/missing events with client shutdown, reconnect, topology changes, discovery delays, and slow outbound queues.
+      - Prefer graceful client shutdown and explicit listener lifecycle over relying on process termination.
+  inspect_slow_thin_client_queue:
+    title: Inspect slow thin clients and partition awareness
+    kind: inspect
+    details:
+      - Check thin-client session count, slow-client warnings, outbound queue growth, idle timeout, reconnect loops, partition awareness, and load balancer placement.
+      - Verify client connector configuration and version/protocol compatibility before tuning server memory or socket buffers.
+      - Treat slow clients as a cluster-stability risk when queues grow during topology changes or large result delivery.
+  inspect_large_query_results:
+    title: Inspect large SQL results and long-running query materialization
+    kind: analyze
+    details:
+      - Use query plans, system views, page size/fetch size, result cardinality, scan-query evidence, and client consumption rate.
+      - Distinguish missing indexes or bad affinity from a correct query that returns too much data for the client or node memory budget.
+      - Add pagination, narrower projection, stronger predicates, collocation, or streaming export only after measuring result materialization.
+  inspect_datastreamer_backpressure:
+    title: Inspect DataStreamer buffering and backpressure
+    kind: analyze
+    details:
+      - Capture buffer size, per-node buffer count, flush frequency, parallel operations, allowOverwrite, receiver cost, and client/server placement.
+      - Correlate streamer flush stalls with WAL/checkpoint pressure, backups, transaction settings, network, and per-node partition skew.
+      - Avoid simply increasing buffers when downstream persistence or receiver logic is the bottleneck.
+  inspect_control_utility_client_connector:
+    title: Inspect control utility client-connector access
+    kind: inspect
+    details:
+      - Verify client connector host/port, SSL/auth settings, address reachability, and whether the control utility version matches the cluster.
+      - If control utility cannot connect, diagnose it like a thin-client connectivity issue before declaring cluster diagnostics unavailable.
+      - Keep a runbook for collecting baseline, state, cache, transaction, contention, and diagnostic command output during incidents.
+  inspect_binary_metadata_affinity:
+    title: Inspect binary metadata and affinity-key drift
+    kind: inspect
+    details:
+      - Compare key/value classes, @AffinityKeyMapped fields, QueryEntity definitions, binary metadata, and deployment versions across all nodes and clients.
+      - Treat "Binary type has different affinity key fields" as schema/config drift until proven otherwise.
+      - If local metadata or work directory is stale, preserve evidence first; only then clear local state in non-production or follow a controlled migration path.
+  inspect_java_module_access:
+    title: Inspect Java module-access flags for Ignite 2.x
+    kind: inspect
+    details:
+      - Check JVM version and whether every Ignite JVM process, IDE run, Gradle test, and client node has required --add-opens flags.
+      - Correlate IgniteUtils initialization failures and InaccessibleObjectException with blocked reflective access to java.base packages.
+      - Prefer a centrally managed JVM option profile over per-service ad hoc fixes.
+  inspect_work_directory_access:
+    title: Inspect Ignite work directory and local state access
+    kind: inspect
+    details:
+      - Verify work directory, parent directory existence, write permissions, container mount, noexec/readonly flags, and whether the path unexpectedly points to temp storage.
+      - Separate "cannot create work directory" from persistence corruption and from deliberate cleanup of local metadata.
+      - Record the effective work path before restarting, because a changed work path can look like data loss or stale metadata.
+  inspect_system_data_region:
+    title: Inspect system or volatile data region OOM
+    kind: inspect
+    details:
+      - Identify whether IgniteOutOfMemoryException names a user region, system region, or volatile/internal region.
+      - For system/volatile region pressure, check systemRegionInitialSize and systemRegionMaxSize in addition to user DataRegionConfiguration.maxSize.
+      - Correlate internal-region pressure with metadata volume, services, continuous queries, compute, and system cache activity.
+  inspect_config_drift:
+    title: Inspect cross-node configuration and version drift
+    kind: inspect
+    details:
+      - Diff Ignite versions, JVM versions, node attributes, cache configs, data regions, persistence/WAL/checkpoint settings, discovery/communication SPI, and failure handler settings.
+      - Compare effective runtime config, not only source templates or Helm/GitOps manifests.
+      - Treat config drift as a first-class incident hypothesis when only some nodes fail validation or show different topology behavior.
+  inspect_external_callbacks:
+    title: Inspect external dependency calls inside Ignite callbacks
+    kind: inspect
+    details:
+      - Find CacheStore, continuous-query filters/listeners, DataStreamer receivers, compute jobs, services, and event callbacks that call databases or remote services.
+      - Correlate callback latency with Ignite thread stalls, transaction timeouts, streamer backpressure, and slow client queues.
+      - Move slow external calls out of critical Ignite threads or make them bounded/idempotent before tuning cluster internals.
+  inspect_clock_window_quality:
+    title: Inspect clock skew and correlation-window quality
+    kind: inspect
+    details:
+      - Compare node clocks, time zones, timestamp formats, artifact coverage windows, and first/last event times before correlating symptoms.
+      - Flag stale or shifted artifacts when GC/JFR/log/OS/NMON time buckets disagree.
+      - Prefer evidence with explicit node binding and incident-window coverage when ranking hypotheses.
+  inspect_rebalance_heap_pressure:
+    title: Inspect rebalance heap and in-flight byte pressure
+    kind: analyze
+    details:
+      - Estimate in-flight rebalance memory from rebalanceBatchSize, rebalanceBatchesPrefetchCount, rebalanceThreadPoolSize, message sizes, and received-but-not-applied batches.
+      - Use JFR/allocation profiles and thread dumps to look for GridDhtPartitionSupplyMessage, GridCacheEntryInfo, IncompleteCacheObject, DirectByteBufferStream, and byte-array churn.
+      - Tune rebalance concurrency and batch sizes only after distinguishing heap pressure from disk/WAL/checkpoint bottlenecks.
+  inspect_stuck_tx_after_network:
+    title: Inspect stuck transaction after unstable network
+    kind: inspect
+    details:
+      - Use control utility transaction diagnostics to find prepared, in-doubt, long-running, or stuck transactions after timeouts or network loss.
+      - Correlate tx state with discovery events, partition-map exchange, lost finish requests, retry settings, client reconnects, and Ignite version-specific fixes.
+      - Prefer explicit operational recovery such as tx kill only after collecting transaction, lock, and topology evidence.
+  inspect_global_index_consistency:
+    title: Inspect custom global-index consistency
+    kind: analyze
+    details:
+      - For custom/global secondary indexes, compare primary storage value, brief/index cache entries, partition, primary node, backup nodes, and node-local queryability.
+      - Query the target partition locally on expected primary/backup nodes and record inaccessible hosts or missing brief entries.
+      - Separate custom-index inconsistency from Ignite SQL index corruption and from ordinary partition loss.
+  inspect_test_grid_lifecycle:
+    title: Inspect Ignite test grid lifecycle overhead
+    kind: analyze
+    details:
+      - Measure total test time, startGrid/startGrids time, stopGrid/stopAllGrids time, persistence cleanup, checkpoint/WAL/snapshot teardown, and fixture setup.
+      - Rank slow suites/classes by grid lifecycle cost before optimizing assertions or application logic.
+      - Use opt-in diagnostics in CI so normal runs stay quiet while long feedback-loop investigations have evidence.
+  inspect_cpu_scheduler_hardware:
+    title: Inspect CPU scheduler, steal, and throttling evidence
+    kind: inspect
+    details:
+      - Check CPU steal, cgroup throttling, run queue length, load average versus cores, per-core saturation, frequency scaling, and CPU quota periods.
+      - Correlate throttling or steal with GC worker stalls, safepoint stopping time, communication timeouts, and critical worker blocked warnings.
+      - Separate host-wide CPU starvation from Ignite hot methods before tuning JVM or cache settings.
+  inspect_thermal_power_state:
+    title: Inspect thermal and power-state throttling
+    kind: inspect
+    details:
+      - Check CPU frequency, thermal events, power caps, BIOS/firmware power policy, cloud instance credits, and hardware sensor logs.
+      - Treat unexplained periodic latency with low CPU utilization as a possible throttling or power-management issue.
+      - Compare affected and healthy nodes with the same workload and topology role.
+  inspect_numa_thp_memory:
+    title: Inspect NUMA, THP, and memory-placement effects
+    kind: inspect
+    details:
+      - Check NUMA topology, process CPU/memory binding, remote memory access, THP mode, compaction stalls, swap, and memory reclaim.
+      - Correlate NUMA/THP effects with Ignite off-heap/page memory, direct buffers, large heap, and GC phase outliers.
+      - Avoid changing heap or region sizes before proving the node has stable local memory access.
+  inspect_cgroup_limits:
+    title: Inspect container or cgroup resource limits
+    kind: inspect
+    details:
+      - Check cgroup CPU throttling, memory.max, memory.high, pids.max, IO limits, OOM events, and Kubernetes eviction/restart history.
+      - Compare JVM detected container limits with configured heap, direct memory, Ignite data regions, and native/off-heap allocations.
+      - Treat container limit hits as host evidence even when application logs only show timeouts or OOM.
+  inspect_disk_hardware_path:
+    title: Inspect disk hardware, controller, and filesystem health
+    kind: inspect
+    details:
+      - Check dmesg/journal for media errors, controller resets, I/O timeouts, SMART/NVMe warnings, RAID degradation, path failover, and filesystem remounts.
+      - Map Ignite storage, WAL, WAL archive, checkpoint, temp, and diagnostic paths to physical devices or cloud volumes.
+      - Correlate disk path faults with WAL fsync, checkpoint, rebalance, snapshot, and node failure windows.
+  inspect_disk_flush_cache:
+    title: Inspect disk flush and write-cache behavior
+    kind: inspect
+    details:
+      - Check fsync/FileForce latency, write cache mode, cache battery/protection, cloud volume burst credits, controller queue depth, and filesystem barriers.
+      - Separate high throughput saturation from rare long flush stalls that can block checkpoint or WAL paths.
+      - Validate durability assumptions before enabling or relying on volatile write cache.
+  inspect_network_hardware_path:
+    title: Inspect NIC, link, MTU, and network-device health
+    kind: inspect
+    details:
+      - Check link flaps, negotiated speed/duplex, driver/firmware errors, drops, overruns, CRC errors, retransmits, MTU mismatch, and jumbo-frame consistency.
+      - Correlate network-device events with discovery failures, communication timeouts, client reconnects, PME delays, and DCR lag.
+      - Compare server-server, client-server, and cross-DC paths separately.
+  inspect_dns_resolution:
+    title: Inspect DNS and name-resolution latency
+    kind: inspect
+    details:
+      - Check forward/reverse DNS, service discovery records, resolver latency, negative caching, /etc/hosts drift, and JVM DNS cache settings.
+      - Correlate resolution stalls with node startup, client connect, discovery, Kubernetes service changes, and certificate hostname checks.
+      - Prefer stable explicit addresses or well-tested discovery providers for critical cluster paths.
+  inspect_time_sync:
+    title: Inspect clock synchronization and time steps
+    kind: inspect
+    details:
+      - Check NTP/PTP status, clock steps, large drift, leap events, hypervisor clock issues, and time-zone mismatches.
+      - Treat time sync as both evidence-quality and runtime risk for TLS, timeout interpretation, leases, logs, and cross-node correlation.
+      - Record clock skew before ranking competing root-cause hypotheses.
+  inspect_os_resource_limits:
+    title: Inspect file descriptor, socket, PID, and ephemeral-port limits
+    kind: inspect
+    details:
+      - Check ulimit, systemd LimitNOFILE/TasksMax, pids.max, thread count, socket count, conntrack, TIME_WAIT, and ephemeral-port range.
+      - Correlate exhaustion with thin-client storms, discovery reconnects, service proxies, JDBC/cache-store connections, and monitoring agents.
+      - Raise limits only after identifying the process or workload consuming them.
+  inspect_noisy_neighbor_infrastructure:
+    title: Inspect noisy-neighbor or shared-infrastructure pressure
+    kind: inspect
+    details:
+      - Compare affected nodes with peers for CPU steal, storage latency, network jitter, hypervisor events, cloud host maintenance, and co-located workload spikes.
+      - Look for intermittent resource starvation that does not align with Ignite workload counters.
+      - Escalate to platform/cloud/storage teams with node, time window, and correlated host metrics rather than only Ignite logs.
+
+decision_tree:
+  root: start
+  nodes:
+    start:
+      title: Начало разбора инцидента
+      recommendation:
+        action: collect_incident_context
+        priority: p0
+        rationale: Without an incident window and affected-node list, later correlations are unreliable.
+      branches:
+        - when:
+            all:
+              - fact: artifact.process_log.present
+                equals: false
+          next: missing_process_logs
+        - when:
+            all:
+              - fact: artifact.process_log.present
+                equals: true
+          next: classify_symptom
+        - when:
+            otherwise: true
+          next: missing_process_logs
+
+    missing_process_logs:
+      title: Нет журналов процесса
+      recommendation:
+        action: collect_process_logs
+        priority: p0
+        rationale: The talk and checklist both start incident analysis from process logs; without them the next recommendation is weak.
+      branches:
+        - when:
+            all:
+              - fact: artifact.os_logs.present
+                equals: false
+          next: missing_os_logs
+        - when:
+            otherwise: true
+          next: missing_monitoring
+
+    missing_os_logs:
+      title: Нет Linux-журналов
+      recommendation:
+        action: collect_os_logs
+        priority: p1
+        rationale: OS logs are needed to distinguish JVM/application problems from kernel, storage, memory, and process-kill events.
+      branches:
+        - when:
+            otherwise: true
+          next: missing_monitoring
+
+    missing_monitoring:
+      title: Нет мониторинга
+      recommendation:
+        action: collect_monitoring
+        priority: p1
+        rationale: Troubleshooting needs correlation between workload, heap/off-heap, CPU, disk, network, and memory.
+      branches:
+        - when:
+            otherwise: true
+          next: classify_symptom
+
+    classify_symptom:
+      title: Классифицировать симптом
+      recommendation:
+        action: collect_jvm_artifacts
+        priority: p1
+        rationale: JVM artifacts decide whether the next step is OOM, crash, GC, safepoint, or host-level analysis.
+      branches:
+        - when:
+            any:
+              - fact: signal.jvm.oom
+                equals: true
+              - fact: incident.symptom
+                equals: out_of_memory
+          next: oom_path
+        - when:
+            any:
+              - fact: signal.jvm.crash
+                equals: true
+              - fact: incident.symptom
+                equals: process_crash
+          next: crash_path
+        - when:
+            any:
+              - fact: signal.gc.long_pause
+                equals: true
+              - fact: incident.symptom
+                equals: long_pause
+          next: pause_path
+        - when:
+            any:
+              - fact: signal.system_worker_blocked
+                equals: true
+              - fact: config.failure_handler_known
+                equals: false
+          next: failure_handler_path
+        - when:
+            any:
+              - fact: signal.cache_invalid_state_or_lost_partitions
+                equals: true
+              - fact: signal.partition_consistency_conflict
+                equals: true
+          next: partition_loss_path
+        - when:
+            any:
+              - fact: signal.maintenance_mode_or_corruption
+                equals: true
+              - fact: signal.persistence_files_missing_after_restart
+                equals: true
+          next: persistence_maintenance_path
+        - when:
+            any:
+              - fact: signal.pitr_wal_history_gap
+                equals: true
+          next: pitr_recovery_path
+        - when:
+            any:
+              - fact: signal.copy_from_native_library_failure
+                equals: true
+          next: copy_from_native_library_path
+        - when:
+            any:
+              - fact: signal.classpath_or_dependency_issue
+                equals: true
+              - fact: signal.peer_class_loading_or_deployment_issue
+                equals: true
+              - fact: signal.version_or_protocol_mismatch
+                equals: true
+          next: classpath_dependency_path
+        - when:
+            any:
+              - fact: signal.java_module_access_issue
+                equals: true
+          next: java_module_access_path
+        - when:
+            any:
+              - fact: signal.work_directory_access_issue
+                equals: true
+          next: work_directory_path
+        - when:
+            any:
+              - fact: signal.binary_metadata_affinity_conflict
+                equals: true
+          next: binary_metadata_affinity_path
+        - when:
+            any:
+              - fact: incident.symptom
+                equals: high_latency
+              - fact: incident.symptom
+                equals: throughput_drop
+              - fact: signal.write_throughput_low
+                equals: true
+              - fact: signal.query_fanout_high
+                equals: true
+              - fact: signal.rebalance_or_topology_change
+                equals: true
+          next: application_performance_path
+        - when:
+            any:
+              - fact: signal.os.disk_pressure
+                equals: true
+          next: disk_path
+        - when:
+            any:
+              - fact: signal.os.network_pressure
+                equals: true
+          next: network_path
+        - when:
+            any:
+              - fact: signal.os.cpu_throttling_or_steal
+                equals: true
+              - fact: signal.os.thermal_or_power_throttling
+                equals: true
+              - fact: signal.os.numa_or_thp_issue
+                equals: true
+              - fact: signal.os.cgroup_limit_pressure
+                equals: true
+              - fact: signal.infrastructure.noisy_neighbor
+                equals: true
+          next: hardware_cpu_platform_path
+        - when:
+            any:
+              - fact: signal.ignite.region_pressure
+                equals: true
+              - fact: signal.system_data_region_oom
+                equals: true
+          next: ignite_memory_path
+        - when:
+            otherwise: true
+          next: baseline_diagnostics_path
+
+    baseline_diagnostics_path:
+      title: Недостаточно данных для уверенной гипотезы
+      recommendation:
+        action: inspect_jvm_options
+        priority: p1
+        rationale: Verify the application is configured to preserve evidence for the next incident.
+      branches:
+        - when:
+            any:
+              - fact: config.control_utility_client_connector_known
+                equals: false
+          next: control_utility_client_connector_path
+        - when:
+            any:
+              - fact: artifact.control_utility.available
+                equals: false
+              - fact: artifact.system_views.present
+                equals: false
+          next: control_utility_observability_path
+        - when:
+            any:
+              - fact: artifact.gc_log.present
+                equals: false
+              - fact: artifact.safepoint_log.present
+                equals: false
+              - fact: artifact.jfr.present
+                equals: false
+              - fact: artifact.heap_dump.present
+                equals: false
+              - fact: artifact.crash_dump.present
+                equals: false
+          next: enable_diagnostics_path
+        - when:
+            otherwise: true
+          next: linux_settings_path
+
+    enable_diagnostics_path:
+      title: Не включена базовая диагностика
+      recommendation:
+        action: enable_diagnostics
+        priority: p1
+        rationale: The checklist recommends predictable diagnostic paths and rotating logs before deep troubleshooting.
+      branches:
+        - when:
+            otherwise: true
+          next: linux_settings_path
+
+    linux_settings_path:
+      title: Проверка системных настроек
+      recommendation:
+        action: inspect_linux_settings
+        priority: p2
+        rationale: Swap, overcommit, file limits, and dirty page settings can turn JVM/Ignite pressure into node-wide incidents.
+      branches: []
+
+    oom_path:
+      title: OutOfMemory или давление памяти
+      recommendation:
+        action: analyze_heap_dump
+        priority: p0
+        rationale: Heap dump or live histogram is the fastest way to identify heap pressure and top object types.
+      branches:
+        - when:
+            all:
+              - fact: signal.ignite.region_pressure
+                equals: true
+          next: ignite_memory_path
+        - when:
+            all:
+              - fact: signal.os.memory_pressure
+                equals: true
+          next: os_memory_path
+        - when:
+            otherwise: true
+          next: gc_memory_path
+
+    gc_memory_path:
+      title: Memory pressure needs GC correlation
+      recommendation:
+        action: analyze_gc_log
+        priority: p1
+        rationale: GC logs show whether pressure is allocation-rate driven, live-set driven, or related to G1 phase behavior.
+      branches:
+        - when:
+            all:
+              - fact: signal.gc.large_live_set
+                equals: true
+          next: large_live_set_path
+        - when:
+            all:
+              - fact: signal.gc.slow_termination
+                equals: true
+          next: slow_termination_path
+        - when:
+            otherwise: true
+          next: jfr_path
+
+    os_memory_path:
+      title: Давление физической памяти или OOM killer
+      recommendation:
+        action: collect_os_logs
+        priority: p0
+        rationale: Distinguish Java heap OOM from native/off-heap pressure and host-level OOM killer behavior.
+      branches:
+        - when:
+            otherwise: true
+          next: ignite_memory_path
+
+    ignite_memory_path:
+      title: Давление Ignite data region/off-heap
+      recommendation:
+        action: inspect_ignite_memory_regions
+        priority: p0
+        rationale: For Ignite, heap usage alone is insufficient; unmanaged/off-heap region usage must be checked.
+      branches:
+        - when:
+            all:
+              - fact: signal.system_data_region_oom
+                equals: true
+          next: system_data_region_path
+        - when:
+            otherwise: true
+          next: disk_path
+
+    crash_path:
+      title: JVM crash or process crash
+      recommendation:
+        action: collect_jvm_artifacts
+        priority: p0
+        rationale: Crash dumps, ErrorFile, process logs, and OS logs are required to separate JVM fatal errors from host kills.
+      branches:
+        - when:
+            all:
+              - fact: artifact.crash_dump.present
+                equals: true
+          next: jfr_path
+        - when:
+            otherwise: true
+          next: enable_diagnostics_path
+
+    pause_path:
+      title: Long pause, latency spike, or throughput drop
+      recommendation:
+        action: analyze_gc_log
+        priority: p0
+        rationale: First split pauses into GC pauses, safepoint stopping delays, or host-level stalls.
+      branches:
+        - when:
+            all:
+              - fact: signal.safepoint.slow_stopping_threads
+                equals: true
+          next: safepoint_path
+        - when:
+            all:
+              - fact: signal.gc.large_live_set
+                equals: true
+          next: large_live_set_path
+        - when:
+            all:
+              - fact: signal.gc.slow_termination
+                equals: true
+          next: slow_termination_path
+        - when:
+            all:
+              - fact: signal.os.disk_pressure
+                equals: true
+          next: disk_path
+        - when:
+            otherwise: true
+          next: jfr_path
+
+    safepoint_path:
+      title: Долгое Stopping threads
+      recommendation:
+        action: analyze_safepoint_log
+        priority: p0
+        rationale: Safepoint log separates time spent stopping Java threads from the VM operation itself.
+      branches:
+        - when:
+            otherwise: true
+          next: safepoint_timeout_path
+
+    safepoint_timeout_path:
+      title: Нужна диагностика safepoint timeout
+      recommendation:
+        action: tune_safepoint_timeout
+        priority: p1
+        rationale: Safepoint timeout can identify threads that fail to stop quickly.
+      branches:
+        - when:
+            otherwise: true
+          next: investigate_os_scheduling_path
+
+    large_live_set_path:
+      title: Большой live set
+      recommendation:
+        action: tune_g1_for_large_live_set
+        priority: p1
+        rationale: The checklist calls out G1MaxNewSizePercent and IHOP tuning when long-lived objects dominate.
+      branches:
+        - when:
+            otherwise: true
+          next: analyze_heap_path
+
+    slow_termination_path:
+      title: Долгая G1 termination phase
+      recommendation:
+        action: tune_g1_threads
+        priority: p1
+        rationale: The talk notes that too many GC worker threads on large CPU hosts can make termination inefficient.
+      branches:
+        - when:
+            otherwise: true
+          next: jfr_path
+
+    analyze_heap_path:
+      title: Подтвердить состав live set
+      recommendation:
+        action: analyze_heap_dump
+        priority: p1
+        rationale: G1 tuning should be validated against object histogram or heap dump evidence.
+      branches: []
+
+    jfr_path:
+      title: Deep JVM correlation
+      recommendation:
+        action: analyze_jfr
+        priority: p1
+        rationale: JFR correlates allocation, CPU samples, thread stalls, IO waits, GC pauses, safepoints, and exceptions for the incident window.
+      branches:
+        - when:
+            all:
+              - fact: signal.jfr.recording_quality_limited
+                equals: true
+          next: enable_diagnostics_path
+        - when:
+            all:
+              - fact: signal.jfr.gc_pause_impact
+                equals: true
+          next: jfr_gc_pause_path
+        - when:
+            any:
+              - fact: signal.jfr.lock_contention
+                equals: true
+              - fact: signal.jfr.thread_stalling_high
+                equals: true
+          next: thread_stall_path
+        - when:
+            all:
+              - fact: signal.jfr.file_io_wait
+                equals: true
+          next: disk_path
+        - when:
+            all:
+              - fact: signal.jfr.socket_io_wait
+                equals: true
+          next: network_path
+        - when:
+            all:
+              - fact: signal.jfr.exception_storm
+                equals: true
+          next: process_log_exception_path
+        - when:
+            all:
+              - fact: signal.jfr.cpu_hot_methods
+                equals: true
+          next: cpu_hot_path
+        - when:
+            all:
+              - fact: signal.os.disk_pressure
+                equals: true
+          next: disk_path
+        - when:
+            all:
+              - fact: signal.os.network_pressure
+                equals: true
+          next: network_path
+        - when:
+            otherwise: true
+          next: investigate_os_scheduling_path
+
+    jfr_gc_pause_path:
+      title: JFR GC pause impact path
+      recommendation:
+        action: analyze_gc_log
+        priority: p1
+        rationale: JFR can show total pause impact and GC phases, but GC logs are still needed for collector-specific detail and heap-transition context.
+      branches:
+        - when:
+            all:
+              - fact: signal.gc.large_live_set
+                equals: true
+          next: large_live_set_path
+        - when:
+            all:
+              - fact: signal.gc.slow_termination
+                equals: true
+          next: slow_termination_path
+        - when:
+            otherwise: true
+          next: investigate_os_scheduling_path
+
+    thread_stall_path:
+      title: JFR thread stall or lock contention
+      recommendation:
+        action: analyze_jfr
+        priority: p1
+        rationale: JFR thread-stalling duration events separate blocked monitors, waits, parks, sleeps, socket waits, and active execution time by thread.
+      branches:
+        - when:
+            any:
+              - fact: signal.jfr.socket_io_wait
+                equals: true
+              - fact: signal.os.network_pressure
+                equals: true
+          next: network_path
+        - when:
+            any:
+              - fact: signal.jfr.file_io_wait
+                equals: true
+              - fact: signal.os.disk_pressure
+                equals: true
+          next: disk_path
+        - when:
+            otherwise: true
+          next: application_performance_path
+
+    cpu_hot_path:
+      title: JFR hot method or CPU execution path
+      recommendation:
+        action: analyze_jfr
+        priority: p1
+        rationale: Method profiling samples identify where JVM time is spent when the recording has few blocking or IO events.
+      branches:
+        - when:
+            any:
+              - fact: signal.binary_marshalling_overhead
+                equals: true
+          next: binary_marshalling_path
+        - when:
+            any:
+              - fact: signal.sql_query_slow
+                equals: true
+              - fact: signal.query_fanout_high
+                equals: true
+          next: query_index_path
+        - when:
+            otherwise: true
+          next: application_performance_path
+
+    process_log_exception_path:
+      title: Exception creation storm needs log correlation
+      recommendation:
+        action: collect_process_logs
+        priority: p1
+        rationale: JFR can show exception creation rate and throw sites, but logs are needed to distinguish expected retries from incident-driving failures.
+      branches:
+        - when:
+            all:
+              - fact: signal.system_worker_blocked
+                equals: true
+          next: failure_handler_path
+        - when:
+            all:
+              - fact: signal.cache_invalid_state_or_lost_partitions
+                equals: true
+          next: partition_loss_path
+        - when:
+            any:
+              - fact: signal.classpath_or_dependency_issue
+                equals: true
+              - fact: signal.peer_class_loading_or_deployment_issue
+                equals: true
+              - fact: signal.version_or_protocol_mismatch
+                equals: true
+          next: classpath_dependency_path
+        - when:
+            any:
+              - fact: workload.spring_or_cache_store
+                equals: true
+              - fact: signal.cache_store_jdbc_dialect_issue
+                equals: true
+          next: spring_cache_store_path
+        - when:
+            any:
+              - fact: workload.continuous_queries
+                equals: true
+              - fact: signal.continuous_query_lifecycle_issue
+                equals: true
+          next: continuous_query_path
+        - when:
+            all:
+              - fact: signal.discovery_or_communication_issue
+                equals: true
+          next: cloud_discovery_path
+        - when:
+            otherwise: true
+          next: application_performance_path
+
+    disk_path:
+      title: Disk pressure or storage stall
+      recommendation:
+        action: analyze_disk
+        priority: p0
+        rationale: The talk highlights full-server or node hangs that correlate with disk pressure and monitoring/NMON data.
+      branches:
+        - when:
+            any:
+              - fact: signal.disk.media_or_controller_error
+                equals: true
+              - fact: signal.disk.filesystem_corruption_or_remount
+                equals: true
+          next: disk_hardware_path
+        - when:
+            all:
+              - fact: signal.disk.write_cache_or_flush_issue
+                equals: true
+          next: disk_flush_cache_path
+        - when:
+            all:
+              - fact: signal.work_directory_access_issue
+                equals: true
+          next: work_directory_path
+        - when:
+            any:
+              - fact: signal.maintenance_mode_or_corruption
+                equals: true
+              - fact: signal.persistence_files_missing_after_restart
+                equals: true
+              - fact: config.work_persistence_paths_known
+                equals: false
+          next: persistence_maintenance_path
+        - when:
+            otherwise: true
+          next: linux_settings_path
+
+    network_path:
+      title: Network pressure
+      recommendation:
+        action: analyze_network
+        priority: p1
+        rationale: Ignite cluster behavior depends on inter-node communication; network saturation can look like application slowness.
+      branches:
+        - when:
+            any:
+              - fact: signal.network.nic_link_or_driver_issue
+                equals: true
+              - fact: signal.network.mtu_or_fragmentation_issue
+                equals: true
+          next: network_hardware_path
+        - when:
+            all:
+              - fact: signal.network.dns_or_name_resolution_issue
+                equals: true
+          next: dns_resolution_path
+        - when:
+            all:
+              - fact: signal.os.time_sync_issue
+                equals: true
+          next: time_sync_path
+        - when:
+            all:
+              - fact: signal.os.fd_or_ephemeral_port_exhaustion
+                equals: true
+          next: os_resource_limits_path
+        - when:
+            otherwise: true
+          next: linux_settings_path
+
+    investigate_os_scheduling_path:
+      title: JVM did not get CPU time or host stalled
+      recommendation:
+        action: investigate_os_scheduling
+        priority: p1
+        rationale: If GC/safepoint analysis does not explain a pause, inspect CPU scheduling and host-wide contention.
+      branches:
+        - when:
+            any:
+              - fact: signal.os.cpu_throttling_or_steal
+                equals: true
+              - fact: signal.os.thermal_or_power_throttling
+                equals: true
+              - fact: signal.os.numa_or_thp_issue
+                equals: true
+              - fact: signal.os.cgroup_limit_pressure
+                equals: true
+              - fact: signal.infrastructure.noisy_neighbor
+                equals: true
+          next: hardware_cpu_platform_path
+        - when:
+            otherwise: true
+          next: linux_settings_path
+
+    hardware_cpu_platform_path:
+      title: CPU scheduler, hardware throttling, or platform pressure path
+      recommendation:
+        action: inspect_cpu_scheduler_hardware
+        priority: p0
+        rationale: Host CPU steal, cgroup throttling, thermal throttling, NUMA, and noisy-neighbor pressure can make Ignite look stalled while JVM evidence is secondary.
+      branches:
+        - when:
+            all:
+              - fact: signal.os.thermal_or_power_throttling
+                equals: true
+          next: thermal_power_path
+        - when:
+            all:
+              - fact: signal.os.numa_or_thp_issue
+                equals: true
+          next: numa_thp_path
+        - when:
+            all:
+              - fact: signal.os.cgroup_limit_pressure
+                equals: true
+          next: cgroup_limits_path
+        - when:
+            all:
+              - fact: signal.infrastructure.noisy_neighbor
+                equals: true
+          next: noisy_neighbor_path
+        - when:
+            otherwise: true
+          next: linux_settings_path
+
+    thermal_power_path:
+      title: Thermal or power-state throttling path
+      recommendation:
+        action: inspect_thermal_power_state
+        priority: p1
+        rationale: Hardware power-state and thermal throttling can create latency without a matching Ignite workload spike.
+      branches: []
+
+    numa_thp_path:
+      title: NUMA, THP, or memory-placement path
+      recommendation:
+        action: inspect_numa_thp_memory
+        priority: p1
+        rationale: Large Ignite heaps and off-heap/page-memory regions are sensitive to NUMA placement, THP, compaction, and reclaim stalls.
+      branches: []
+
+    cgroup_limits_path:
+      title: Container or cgroup resource-limit path
+      recommendation:
+        action: inspect_cgroup_limits
+        priority: p0
+        rationale: Container CPU, memory, PID, and IO limits can present as Ignite timeouts, OOM, and worker stalls.
+      branches: []
+
+    noisy_neighbor_path:
+      title: Noisy-neighbor or shared-infrastructure path
+      recommendation:
+        action: inspect_noisy_neighbor_infrastructure
+        priority: p1
+        rationale: Intermittent host starvation on shared compute, storage, or network needs platform evidence before JVM or Ignite tuning.
+      branches: []
+
+    disk_hardware_path:
+      title: Disk media, controller, RAID, or filesystem path
+      recommendation:
+        action: inspect_disk_hardware_path
+        priority: p0
+        rationale: Disk hardware and filesystem faults can block WAL, checkpoint, snapshot, and page-store paths even when Ignite configuration is unchanged.
+      branches:
+        - when:
+            all:
+              - fact: signal.disk.write_cache_or_flush_issue
+                equals: true
+          next: disk_flush_cache_path
+        - when:
+            otherwise: true
+          next: linux_settings_path
+
+    disk_flush_cache_path:
+      title: Disk flush, cache, or fsync latency path
+      recommendation:
+        action: inspect_disk_flush_cache
+        priority: p0
+        rationale: Rare long fsync/FileForce stalls can dominate WAL and checkpoint latency even when average disk throughput looks healthy.
+      branches: []
+
+    network_hardware_path:
+      title: NIC, link, driver, MTU, or network-device path
+      recommendation:
+        action: inspect_network_hardware_path
+        priority: p0
+        rationale: NIC/link/MTU faults often appear as discovery, communication, PME, client reconnect, or cross-DC replication symptoms.
+      branches:
+        - when:
+            all:
+              - fact: signal.network.dns_or_name_resolution_issue
+                equals: true
+          next: dns_resolution_path
+        - when:
+            otherwise: true
+          next: linux_settings_path
+
+    dns_resolution_path:
+      title: DNS or name-resolution latency path
+      recommendation:
+        action: inspect_dns_resolution
+        priority: p1
+        rationale: Slow or inconsistent name resolution can delay startup, discovery, client connection, service discovery, and TLS hostname checks.
+      branches: []
+
+    time_sync_path:
+      title: Time synchronization path
+      recommendation:
+        action: inspect_time_sync
+        priority: p1
+        rationale: Clock steps and drift affect evidence correlation and can also confuse timeouts, TLS, and distributed recovery interpretation.
+      branches:
+        - when:
+            otherwise: true
+          next: clock_window_quality_path
+
+    os_resource_limits_path:
+      title: File descriptor, socket, PID, or ephemeral-port limit path
+      recommendation:
+        action: inspect_os_resource_limits
+        priority: p0
+        rationale: Resource-limit exhaustion can turn client storms, discovery reconnects, and external integrations into cluster-wide failures.
+      branches: []
+
+    application_performance_path:
+      title: Application-level latency or throughput issue
+      recommendation:
+        action: validate_capacity_model
+        priority: p0
+        rationale: Ignite performance depends on operation mix, key distribution, partitions, backups, and topology, not only JVM health.
+      branches:
+        - when:
+            any:
+              - fact: artifact.control_utility.available
+                equals: false
+              - fact: artifact.system_views.present
+                equals: false
+          next: control_utility_observability_path
+        - when:
+            any:
+              - fact: signal.system_worker_blocked
+                equals: true
+          next: failure_handler_path
+        - when:
+            any:
+              - fact: signal.cache_invalid_state_or_lost_partitions
+                equals: true
+              - fact: signal.partition_consistency_conflict
+                equals: true
+          next: partition_loss_path
+        - when:
+            any:
+              - fact: signal.classpath_or_dependency_issue
+                equals: true
+              - fact: signal.peer_class_loading_or_deployment_issue
+                equals: true
+              - fact: signal.version_or_protocol_mismatch
+                equals: true
+          next: classpath_dependency_path
+        - when:
+            any:
+              - fact: signal.java_module_access_issue
+                equals: true
+          next: java_module_access_path
+        - when:
+            any:
+              - fact: signal.config_drift_across_nodes
+                equals: true
+          next: config_drift_path
+        - when:
+            any:
+              - fact: signal.clock_skew_or_timestamp_mismatch
+                equals: true
+          next: clock_window_quality_path
+        - when:
+            any:
+              - fact: signal.binary_metadata_affinity_conflict
+                equals: true
+          next: binary_metadata_affinity_path
+        - when:
+            any:
+              - fact: deployment.cloud_or_containerized
+                equals: true
+              - fact: signal.discovery_or_communication_issue
+                equals: true
+          next: cloud_discovery_path
+        - when:
+            any:
+              - fact: signal.client_failover_issue
+                equals: true
+              - fact: config.client_topology_known
+                equals: false
+          next: client_topology_path
+        - when:
+            any:
+              - fact: workload.unsuitable_for_ignite
+                equals: true
+          next: ignite_fit_path
+        - when:
+            any:
+              - fact: config.security_enabled
+                equals: true
+              - fact: signal.security_handshake_or_auth_issue
+                equals: true
+          next: security_path
+        - when:
+            any:
+              - fact: workload.spark_or_flink_integration
+                equals: true
+              - fact: signal.external_connector_backpressure
+                equals: true
+              - fact: signal.external_dependency_in_callback
+                equals: true
+          next: external_streaming_path
+        - when:
+            any:
+              - fact: signal.dcr_replication_lag
+                equals: true
+              - fact: config.disaster_recovery_known
+                equals: false
+          next: disaster_recovery_path
+        - when:
+            any:
+              - fact: signal.cdc_or_schema_migration_issue
+                equals: true
+          next: cdc_schema_migration_path
+        - when:
+            any:
+              - fact: signal.global_index_consistency_issue
+                equals: true
+          next: global_index_consistency_path
+        - when:
+            any:
+              - fact: workload.test_or_ci_grid_lifecycle
+                equals: true
+              - fact: signal.grid_lifecycle_overhead
+                equals: true
+          next: test_grid_lifecycle_path
+        - when:
+            any:
+              - fact: signal.thin_client_session_pressure
+                equals: true
+              - fact: signal.slow_client_outbound_queue
+                equals: true
+              - fact: config.thin_client_partition_awareness_known
+                equals: false
+          next: thin_client_pressure_path
+        - when:
+            any:
+              - fact: workload.continuous_queries
+                equals: true
+              - fact: signal.continuous_query_lifecycle_issue
+                equals: true
+          next: continuous_query_path
+        - when:
+            any:
+              - fact: workload.spring_or_cache_store
+                equals: true
+              - fact: signal.cache_store_jdbc_dialect_issue
+                equals: true
+          next: spring_cache_store_path
+        - when:
+            any:
+              - fact: signal.maintenance_mode_or_corruption
+                equals: true
+              - fact: signal.persistence_files_missing_after_restart
+                equals: true
+          next: persistence_maintenance_path
+        - when:
+            any:
+              - fact: workload.write_heavy
+                equals: true
+              - fact: signal.write_throughput_low
+                equals: true
+              - fact: signal.datastreamer_backpressure_or_flush_issue
+                equals: true
+          next: write_path
+        - when:
+            any:
+              - fact: signal.query_fanout_high
+                equals: true
+              - fact: workload.compute_colocated
+                equals: true
+              - fact: signal.hot_key_or_partition
+                equals: true
+              - fact: signal.sql_query_slow
+                equals: true
+              - fact: signal.data_skew
+                equals: true
+              - fact: signal.query_result_materialization_pressure
+                equals: true
+          next: affinity_query_path
+        - when:
+            any:
+              - fact: workload.transactional
+                equals: true
+              - fact: signal.transaction_contention_or_timeout
+                equals: true
+              - fact: signal.tx_stuck_prepared_after_network
+                equals: true
+          next: transaction_path
+        - when:
+            any:
+              - fact: signal.binary_marshalling_overhead
+                equals: true
+              - fact: signal.classpath_or_dependency_issue
+                equals: true
+              - fact: signal.binary_metadata_affinity_conflict
+                equals: true
+          next: binary_marshalling_path
+        - when:
+            any:
+              - fact: signal.rebalance_or_topology_change
+                equals: true
+              - fact: signal.rebalance_stalled
+                equals: true
+              - fact: signal.rebalance_heap_allocation_pressure
+                equals: true
+          next: topology_rebalance_path
+        - when:
+            any:
+              - fact: workload.mixed_realtime_and_batch
+                equals: true
+          next: mixed_workload_path
+        - when:
+            otherwise: true
+          next: tracing_monitoring_path
+
+    write_path:
+      title: Heavy write/load path
+      recommendation:
+        action: analyze_write_path
+        priority: p0
+        rationale: High write throughput problems first need the exact write mechanism and durability settings.
+      branches:
+        - when:
+            any:
+              - fact: workload.spring_or_cache_store
+                equals: true
+              - fact: signal.cache_store_jdbc_dialect_issue
+                equals: true
+          next: spring_cache_store_path
+        - when:
+            all:
+              - fact: config.memory_regions_known
+                equals: false
+          next: memory_region_config_path
+        - when:
+            any:
+              - fact: signal.write_throughput_low
+                equals: true
+              - fact: signal.datastreamer_backpressure_or_flush_issue
+                equals: true
+          next: data_streamer_path
+        - when:
+            any:
+              - fact: config.cache.backups_known
+                equals: false
+              - fact: config.cache.write_sync_known
+                equals: false
+              - fact: config.persistence_enabled
+                equals: true
+              - fact: signal.checkpoint_or_wal_pressure
+                equals: true
+          next: cache_durability_path
+        - when:
+            all:
+              - fact: signal.binary_marshalling_overhead
+                equals: true
+          next: binary_marshalling_path
+        - when:
+            otherwise: true
+          next: mixed_workload_path
+
+    data_streamer_path:
+      title: Bulk writes should be checked against DataStreamer
+      recommendation:
+        action: recommend_data_streamer
+        priority: p1
+        rationale: Multiple Ignite talks use DataStreamer as the baseline tool for high-throughput ingestion instead of one-by-one puts.
+      branches:
+        - when:
+            all:
+              - fact: signal.datastreamer_backpressure_or_flush_issue
+                equals: true
+          next: datastreamer_backpressure_path
+        - when:
+            otherwise: true
+          next: cache_durability_path
+
+    cache_durability_path:
+      title: Replication and durability cost
+      recommendation:
+        action: inspect_cache_durability
+        priority: p1
+        rationale: Backups, write synchronization, transactions, persistence, WAL, and checkpoints can dominate write latency.
+      branches:
+        - when:
+            all:
+              - fact: signal.checkpoint_or_wal_pressure
+                equals: true
+          next: wal_checkpoint_path
+        - when:
+            all:
+              - fact: signal.rebalance_or_topology_change
+                equals: true
+          next: topology_rebalance_path
+        - when:
+            otherwise: true
+          next: disk_path
+
+    affinity_query_path:
+      title: Affinity, collocation, and distributed query shape
+      recommendation:
+        action: inspect_affinity_collocation
+        priority: p0
+        rationale: Talks on railway planning and realtime systems highlight that fanout across partitions/nodes is often the hidden latency source.
+      branches:
+        - when:
+            all:
+              - fact: signal.query_result_materialization_pressure
+                equals: true
+          next: large_query_result_path
+        - when:
+            all:
+              - fact: signal.data_skew
+                equals: true
+          next: data_skew_path
+        - when:
+            any:
+              - fact: signal.query_fanout_high
+                equals: true
+              - fact: signal.sql_query_slow
+                equals: true
+          next: query_index_path
+        - when:
+            any:
+              - fact: workload.read_heavy
+                equals: true
+              - fact: signal.hot_key_or_partition
+                equals: true
+          next: near_cache_path
+        - when:
+            otherwise: true
+          next: jfr_path
+
+    query_index_path:
+      title: Local lookup or distributed query needs index review
+      recommendation:
+        action: inspect_sql_plan
+        priority: p1
+        rationale: SQL and local scans need plan evidence before adding indexes or changing affinity.
+      branches:
+        - when:
+            any:
+              - fact: signal.index_consistency_issue
+                equals: true
+              - fact: signal.index_inline_size_mismatch
+                equals: true
+          next: index_consistency_path
+        - when:
+            all:
+              - fact: signal.query_result_materialization_pressure
+                equals: true
+          next: large_query_result_path
+        - when:
+            otherwise: true
+          next: mixed_workload_path
+
+    near_cache_path:
+      title: Hot read path
+      recommendation:
+        action: inspect_near_cache
+        priority: p2
+        rationale: Near cache can help repeated hot reads, but it must be validated against invalidation and memory overhead.
+      branches: []
+
+    topology_rebalance_path:
+      title: Topology change, exchange, or rebalance
+      recommendation:
+        action: inspect_topology_rebalance
+        priority: p0
+        rationale: Node changes, rebalance, and baseline changes can explain sudden latency, throughput, and availability symptoms.
+      branches:
+        - when:
+            any:
+              - fact: signal.cache_invalid_state_or_lost_partitions
+                equals: true
+              - fact: config.partition_loss_policy_known
+                equals: false
+          next: partition_loss_path
+        - when:
+            any:
+              - fact: signal.rebalance_stalled
+                equals: true
+          next: rebalance_metrics_path
+        - when:
+            any:
+              - fact: signal.discovery_or_communication_issue
+                equals: true
+              - fact: deployment.cloud_or_containerized
+                equals: true
+          next: cloud_discovery_path
+        - when:
+            all:
+              - fact: signal.split_brain_or_segmentation
+                equals: true
+          next: failover_split_brain_path
+        - when:
+            otherwise: true
+          next: disk_path
+
+    failover_split_brain_path:
+      title: Failover and split-brain scenario
+      recommendation:
+        action: inspect_failover_split_brain
+        priority: p0
+        rationale: Multi-node and multi-DC Ignite deployments need explicit checks for inconsistent topology views and client failover.
+      branches: []
+
+    mixed_workload_path:
+      title: Mixed realtime, batch, compute, or analytics workload
+      recommendation:
+        action: separate_mixed_workloads
+        priority: p1
+        rationale: Realtime systems in the subtitle batch repeatedly depend on protecting millisecond paths from bulk and analytical traffic.
+      branches: []
+
+    cloud_discovery_path:
+      title: Cloud or dynamic-infrastructure discovery path
+      recommendation:
+        action: inspect_cloud_discovery
+        priority: p0
+        rationale: Ignite 2 deployments in clouds and container platforms are sensitive to discovery, address stability, ports, and restart behavior.
+      branches:
+        - when:
+            all:
+              - fact: signal.client_failover_issue
+                equals: true
+          next: client_topology_path
+        - when:
+            otherwise: true
+          next: missing_monitoring
+
+    client_topology_path:
+      title: Client topology and failover path
+      recommendation:
+        action: inspect_client_topology
+        priority: p0
+        rationale: Ignite incidents often differ for server nodes, thick clients, thin clients, and embedded application nodes.
+      branches:
+        - when:
+            any:
+              - fact: signal.thin_client_session_pressure
+                equals: true
+              - fact: signal.slow_client_outbound_queue
+                equals: true
+              - fact: config.thin_client_partition_awareness_known
+                equals: false
+          next: thin_client_pressure_path
+        - when:
+            otherwise: true
+          next: network_path
+
+    transaction_path:
+      title: Transactional workload path
+      recommendation:
+        action: analyze_transactions
+        priority: p0
+        rationale: Payment and account-style Ignite 2 workloads need lock, timeout, affinity, and cross-partition transaction evidence.
+      branches:
+        - when:
+            all:
+              - fact: signal.tx_stuck_prepared_after_network
+                equals: true
+          next: stuck_tx_network_path
+        - when:
+            any:
+              - fact: signal.query_fanout_high
+                equals: true
+              - fact: config.affinity_known
+                equals: false
+          next: affinity_query_path
+        - when:
+            otherwise: true
+          next: jfr_path
+
+    binary_marshalling_path:
+      title: Binary marshalling or serialization overhead path
+      recommendation:
+        action: inspect_binary_marshalling
+        priority: p1
+        rationale: High-throughput Ignite 2 talks repeatedly point at object conversion and binary format costs during write and SQL paths.
+      branches:
+        - when:
+            all:
+              - fact: signal.binary_metadata_affinity_conflict
+                equals: true
+          next: binary_metadata_affinity_path
+        - when:
+            all:
+              - fact: workload.write_heavy
+                equals: true
+          next: write_path
+        - when:
+            all:
+              - fact: signal.sql_query_slow
+                equals: true
+          next: query_index_path
+        - when:
+            otherwise: true
+          next: jfr_path
+
+    wal_checkpoint_path:
+      title: WAL or checkpoint pressure path
+      recommendation:
+        action: analyze_wal_checkpoint_pressure
+        priority: p0
+        rationale: Ignite persistence can shift write latency from JVM symptoms to storage, WAL, and checkpoint pressure.
+      branches:
+        - when:
+            any:
+              - fact: signal.maintenance_mode_or_corruption
+                equals: true
+              - fact: config.work_persistence_paths_known
+                equals: false
+          next: persistence_maintenance_path
+        - when:
+            otherwise: true
+          next: disk_path
+
+    control_utility_observability_path:
+      title: Control utility and system-view observability path
+      recommendation:
+        action: collect_control_utility_and_system_views
+        priority: p0
+        rationale: Official Ignite and GridGain docs expose many cluster-only facts through control.sh, system views, JMX, and diagnostics commands.
+      branches:
+        - when:
+            all:
+              - fact: signal.transaction_contention_or_timeout
+                equals: true
+          next: transaction_path
+        - when:
+            all:
+              - fact: signal.rebalance_stalled
+                equals: true
+          next: rebalance_metrics_path
+        - when:
+            all:
+              - fact: signal.index_consistency_issue
+                equals: true
+          next: index_consistency_path
+        - when:
+            otherwise: true
+          next: tracing_monitoring_path
+
+    failure_handler_path:
+      title: Critical failure handler or system-worker path
+      recommendation:
+        action: inspect_failure_handler_critical_workers
+        priority: p0
+        rationale: Apache Ignite documents critical failures and blocked system workers as cluster-safety events that require preserving logs and thread evidence.
+      branches:
+        - when:
+            any:
+              - fact: signal.checkpoint_or_wal_pressure
+                equals: true
+              - fact: signal.jfr.file_io_wait
+                equals: true
+          next: wal_checkpoint_path
+        - when:
+            any:
+              - fact: signal.discovery_or_communication_issue
+                equals: true
+              - fact: signal.os.network_pressure
+                equals: true
+          next: network_path
+        - when:
+            otherwise: true
+          next: jfr_path
+
+    partition_loss_path:
+      title: Lost partitions or invalid cache state path
+      recommendation:
+        action: inspect_partition_loss_policy
+        priority: p0
+        rationale: CacheInvalidStateException and lost partitions require explicit partition-loss and consistency handling before normal performance tuning.
+      branches:
+        - when:
+            all:
+              - fact: signal.partition_consistency_conflict
+                equals: true
+          next: consistency_check_path
+        - when:
+            otherwise: true
+          next: consistency_check_path
+
+    consistency_check_path:
+      title: Partition consistency check path
+      recommendation:
+        action: run_consistency_checks
+        priority: p0
+        rationale: GridGain 8 documents idle_verify and partition_reconciliation as distinct checks for idle clusters versus clusters under load.
+      branches:
+        - when:
+            all:
+              - fact: signal.index_consistency_issue
+                equals: true
+          next: index_consistency_path
+        - when:
+            otherwise: true
+          next: rebalance_metrics_path
+
+    index_consistency_path:
+      title: SQL index consistency or rebuild path
+      recommendation:
+        action: inspect_sql_index_consistency
+        priority: p1
+        rationale: Official docs separate missing indexes from corrupted indexes, validate_indexes failures, and inline-size changes that require rebuild.
+      branches:
+        - when:
+            otherwise: true
+          next: mixed_workload_path
+
+    rebalance_metrics_path:
+      title: Rebalance progress and bottleneck path
+      recommendation:
+        action: inspect_rebalance_progress_metrics
+        priority: p0
+        rationale: GridGain 8 troubleshooting gives more precise rebalance progress signals than a generic topology-change check.
+      branches:
+        - when:
+            all:
+              - fact: signal.rebalance_heap_allocation_pressure
+                equals: true
+          next: rebalance_heap_pressure_path
+        - when:
+            all:
+              - fact: signal.checkpoint_or_wal_pressure
+                equals: true
+          next: wal_checkpoint_path
+        - when:
+            all:
+              - fact: signal.os.network_pressure
+                equals: true
+          next: network_path
+        - when:
+            otherwise: true
+          next: disk_path
+
+    persistence_maintenance_path:
+      title: Persistence path, WAL, or maintenance-mode path
+      recommendation:
+        action: inspect_persistence_paths_and_maintenance
+        priority: p0
+        rationale: GridGain 8 troubleshooting calls out temp-directory persistence loss and maintenance-mode/corruption handling as operationally separate from normal disk pressure.
+      branches:
+        - when:
+            all:
+              - fact: signal.work_directory_access_issue
+                equals: true
+          next: work_directory_path
+        - when:
+            all:
+              - fact: signal.pitr_wal_history_gap
+                equals: true
+          next: pitr_recovery_path
+        - when:
+            all:
+              - fact: signal.checkpoint_or_wal_pressure
+                equals: true
+          next: disk_path
+        - when:
+            otherwise: true
+          next: disk_path
+
+    thin_client_pressure_path:
+      title: Thin client session pressure path
+      recommendation:
+        action: inspect_thin_client_sessions
+        priority: p1
+        rationale: GridGain troubleshooting distinguishes large thin-client session counts and reconnect storms from ordinary server-node load.
+      branches: []
+
+    pitr_recovery_path:
+      title: PITR WAL history path
+      recommendation:
+        action: inspect_pitr_wal_archive
+        priority: p0
+        rationale: Point-in-time recovery depends on snapshot metadata and continuous WAL history, so missing WAL segments are a recovery-plan failure.
+      branches:
+        - when:
+            otherwise: true
+          next: disaster_recovery_path
+
+    copy_from_native_library_path:
+      title: COPY FROM native-library loading path
+      recommendation:
+        action: inspect_copy_from_native_library
+        priority: p2
+        rationale: GridGain troubleshooting documents COPY FROM failures caused by native library extraction on noexec temporary directories.
+      branches: []
+
+    classpath_dependency_path:
+      title: Classpath, dependency, or connector packaging path
+      recommendation:
+        action: inspect_classpath_dependency_packaging
+        priority: p1
+        rationale: Local StackOverflow frequency shows recurring ClassNotFound/NoClassDef and connector packaging failures around Ignite modules and integrations.
+      branches:
+        - when:
+            all:
+              - fact: signal.java_module_access_issue
+                equals: true
+          next: java_module_access_path
+        - when:
+            all:
+              - fact: signal.peer_class_loading_or_deployment_issue
+                equals: true
+          next: control_utility_observability_path
+        - when:
+            otherwise: true
+          next: mixed_workload_path
+
+    spring_cache_store_path:
+      title: Spring or CacheStore/JDBC integration path
+      recommendation:
+        action: inspect_spring_cache_store_jdbc
+        priority: p1
+        rationale: Spring, repository, and JDBC cache-store issues are frequent in local Q&A and often require API/dialect review rather than cluster tuning.
+      branches:
+        - when:
+            all:
+              - fact: signal.cache_store_jdbc_dialect_issue
+                equals: true
+          next: cache_durability_path
+        - when:
+            otherwise: true
+          next: classpath_dependency_path
+
+    continuous_query_path:
+      title: Continuous query lifecycle path
+      recommendation:
+        action: inspect_continuous_query_lifecycle
+        priority: p1
+        rationale: Continuous query problems often combine client churn, topology changes, slow clients, and remote listener lifecycle.
+      branches:
+        - when:
+            any:
+              - fact: signal.slow_client_outbound_queue
+                equals: true
+              - fact: signal.client_failover_issue
+                equals: true
+          next: thin_client_pressure_path
+        - when:
+            otherwise: true
+          next: client_topology_path
+
+    large_query_result_path:
+      title: Large result or scan materialization path
+      recommendation:
+        action: inspect_large_query_results
+        priority: p1
+        rationale: Many SQL incidents are not only missing-index problems; large result materialization can move bottlenecks to client fetch, heap, or network.
+      branches:
+        - when:
+            otherwise: true
+          next: client_topology_path
+
+    datastreamer_backpressure_path:
+      title: DataStreamer backpressure path
+      recommendation:
+        action: inspect_datastreamer_backpressure
+        priority: p1
+        rationale: Frequent write-throughput reports need a separate branch for streamer buffers, flush cadence, and downstream receiver/storage pressure.
+      branches:
+        - when:
+            all:
+              - fact: signal.checkpoint_or_wal_pressure
+                equals: true
+          next: wal_checkpoint_path
+        - when:
+            otherwise: true
+          next: cache_durability_path
+
+    control_utility_client_connector_path:
+      title: Control utility client-connector path
+      recommendation:
+        action: inspect_control_utility_client_connector
+        priority: p1
+        rationale: Modern control utility diagnostics depend on client-connector reachability and compatible client protocol settings.
+      branches:
+        - when:
+            otherwise: true
+          next: control_utility_observability_path
+
+    binary_metadata_affinity_path:
+      title: Binary metadata or affinity-key drift path
+      recommendation:
+        action: inspect_binary_metadata_affinity
+        priority: p0
+        rationale: Local RAG notes call out binary metadata and affinity-key drift as a recurring startup and schema-evolution failure mode.
+      branches:
+        - when:
+            otherwise: true
+          next: cdc_schema_migration_path
+
+    java_module_access_path:
+      title: Java module-access compatibility path
+      recommendation:
+        action: inspect_java_module_access
+        priority: p1
+        rationale: Ignite 2.x on newer JVMs can fail during startup or utility initialization when required reflective --add-opens flags are absent.
+      branches: []
+
+    work_directory_path:
+      title: Ignite work directory access path
+      recommendation:
+        action: inspect_work_directory_access
+        priority: p0
+        rationale: Local troubleshooting notes separate failed work-directory creation from persistence corruption and stale local metadata.
+      branches: []
+
+    system_data_region_path:
+      title: System or volatile data region OOM path
+      recommendation:
+        action: inspect_system_data_region
+        priority: p0
+        rationale: Internal/system data region OOM requires checking systemRegionInitialSize/systemRegionMaxSize, not only user data regions.
+      branches: []
+
+    config_drift_path:
+      title: Cross-node config or version drift path
+      recommendation:
+        action: inspect_config_drift
+        priority: p1
+        rationale: Neighboring analyzer notes identify config/version drift as a high-value explanation when only some nodes fail or diverge.
+      branches:
+        - when:
+            any:
+              - fact: signal.binary_metadata_affinity_conflict
+                equals: true
+              - fact: signal.version_or_protocol_mismatch
+                equals: true
+          next: binary_metadata_affinity_path
+        - when:
+            otherwise: true
+          next: control_utility_observability_path
+
+    external_callback_path:
+      title: External dependency inside Ignite callback path
+      recommendation:
+        action: inspect_external_callbacks
+        priority: p1
+        rationale: CacheStore, listener, streamer, compute, and service callbacks can move the bottleneck outside Ignite while blocking Ignite threads.
+      branches:
+        - when:
+            all:
+              - fact: signal.transaction_contention_or_timeout
+                equals: true
+          next: transaction_path
+        - when:
+            otherwise: true
+          next: tracing_monitoring_path
+
+    clock_window_quality_path:
+      title: Clock skew or artifact-window quality path
+      recommendation:
+        action: inspect_clock_window_quality
+        priority: p1
+        rationale: Local analyzer seeds call out clock/window quality as a prerequisite for reliable cross-node correlation.
+      branches: []
+
+    rebalance_heap_pressure_path:
+      title: Rebalance heap allocation pressure path
+      recommendation:
+        action: inspect_rebalance_heap_pressure
+        priority: p0
+        rationale: Local rebalance notes point to in-flight supply/demand batches and byte-array churn as a distinct heap-pressure mechanism.
+      branches:
+        - when:
+            all:
+              - fact: signal.checkpoint_or_wal_pressure
+                equals: true
+          next: wal_checkpoint_path
+        - when:
+            otherwise: true
+          next: jfr_path
+
+    stuck_tx_network_path:
+      title: Stuck transaction after network instability path
+      recommendation:
+        action: inspect_stuck_tx_after_network
+        priority: p0
+        rationale: Local TX resilience notes identify prepared/in-doubt transactions after lost network messages as an operationally dangerous case.
+      branches: []
+
+    global_index_consistency_path:
+      title: Custom global-index consistency path
+      recommendation:
+        action: inspect_global_index_consistency
+        priority: p1
+        rationale: The ignite-checker prototype validates primary storage, brief/index cache entries, local partition queries, and inaccessible nodes for custom global indexes.
+      branches:
+        - when:
+            otherwise: true
+          next: affinity_query_path
+
+    test_grid_lifecycle_path:
+      title: Test grid lifecycle overhead path
+      recommendation:
+        action: inspect_test_grid_lifecycle
+        priority: p2
+        rationale: Local CI notes show that repeated startGrid/stopGrid, persistence cleanup, and teardown can dominate Ignite test feedback time.
+      branches: []
+
+    tracing_monitoring_path:
+      title: Tracing and monitoring evidence path
+      recommendation:
+        action: inspect_tracing_monitoring
+        priority: p1
+        rationale: The expanded English corpus includes multiple troubleshooting and monitoring talks; tracing is the best next step when coarse metrics do not isolate latency.
+      branches:
+        - when:
+            all:
+              - fact: signal.transaction_contention_or_timeout
+                equals: true
+          next: transaction_path
+        - when:
+            all:
+              - fact: signal.sql_query_slow
+                equals: true
+          next: query_index_path
+        - when:
+            otherwise: true
+          next: jfr_path
+
+    data_skew_path:
+      title: Data or workload skew path
+      recommendation:
+        action: analyze_data_skew
+        priority: p0
+        rationale: Data skew appears in production and Control Center talks as a common reason for uneven latency and underused clusters.
+      branches:
+        - when:
+            otherwise: true
+          next: tracing_monitoring_path
+
+    external_streaming_path:
+      title: External streaming or batch engine integration path
+      recommendation:
+        action: inspect_external_streaming_integration
+        priority: p1
+        rationale: Spark, Flink, Kafka, and CDC talks show that the bottleneck may sit at the integration boundary rather than inside Ignite.
+      branches:
+        - when:
+            all:
+              - fact: signal.external_dependency_in_callback
+                equals: true
+          next: external_callback_path
+        - when:
+            all:
+              - fact: signal.checkpoint_or_wal_pressure
+                equals: true
+          next: wal_checkpoint_path
+        - when:
+            otherwise: true
+          next: write_path
+
+    disaster_recovery_path:
+      title: Disaster recovery or data-center replication path
+      recommendation:
+        action: inspect_disaster_recovery
+        priority: p0
+        rationale: Production-readiness talks repeatedly separate normal backup settings from tested restore, failover, and multisite replication behavior.
+      branches:
+        - when:
+            all:
+              - fact: signal.dcr_replication_lag
+                equals: true
+          next: network_path
+        - when:
+            otherwise: true
+          next: disk_path
+
+    security_path:
+      title: Security configuration path
+      recommendation:
+        action: inspect_security_configuration
+        priority: p1
+        rationale: Security failures often present as client reconnects, failed joins, or rolling-restart incidents.
+      branches:
+        - when:
+            all:
+              - fact: signal.discovery_or_communication_issue
+                equals: true
+          next: cloud_discovery_path
+        - when:
+            otherwise: true
+          next: client_topology_path
+
+    memory_region_config_path:
+      title: Data region and page memory configuration path
+      recommendation:
+        action: inspect_memory_region_configuration
+        priority: p0
+        rationale: Native persistence, page memory, and cluster memory-management talks highlight that Ignite memory pressure is not only Java heap pressure.
+      branches:
+        - when:
+            all:
+              - fact: signal.checkpoint_or_wal_pressure
+                equals: true
+          next: wal_checkpoint_path
+        - when:
+            otherwise: true
+          next: ignite_memory_path
+
+    cdc_schema_migration_path:
+      title: CDC, schema migration, or cluster migration path
+      recommendation:
+        action: inspect_cdc_schema_migration
+        priority: p1
+        rationale: Migration and CDC talks add a separate class of failures around schema drift, binary metadata, and cutover behavior.
+      branches:
+        - when:
+            otherwise: true
+          next: write_path
+
+    ignite_fit_path:
+      title: Workload fit review path
+      recommendation:
+        action: evaluate_ignite_fit
+        priority: p2
+        rationale: Several talks explicitly discuss when Apache Ignite is powerful but not the simplest or safest choice for a workload.
+      branches: []
+
+checklist_items:
+  jvm_diagnostics_options:
+    title: JVM diagnostic options to consider
+    options:
+      - -Xmx=<4g|8g|16g|31g|project-specific>
+      - -Xms=<same-as-Xmx>
+      - -XX:+AlwaysPreTouch
+      - -XX:+ExitOnOutOfMemoryError
+      - -XX:+HeapDumpOnOutOfMemoryError
+      - -XX:HeapDumpPath=/opt/ignite/logs/diag
+      - -XX:ErrorFile=/opt/ignite/logs/diag/crash-dump-%p.err
+      - -XX:StartFlightRecording=disk=true,settings=<cfg>/profiling-openjdk11.jfc,maxage=120h,maxsize=10000m,dumponexit=true
+      - -XX:FlightRecorderOptions=repository=/opt/ignite/logs/diag,maxchunksize=30M
+      - -Xlog:gc*=debug,gc+classhisto=trace:file=/opt/ignite/logs/diag/ignite_se_jvm_gc_log:time,uptime,tags:filecount=50,filesize=50M
+      - -Xlog:safepoint:file=/opt/ignite/logs/diag/ignite_se_jvm_safepoint.log:time,uptime,tags:filecount=50,filesize=50M
+      - -XX:+UseG1GC
+      - -XX:MaxGCPauseMillis=100
+      - -XX:G1MaxNewSizePercent=5
+      - -XX:ParallelGCThreads=<CPUs/4>
+      - -XX:-G1UseAdaptiveIHOP
+      - -XX:InitiatingHeapOccupancyPercent=30
+      - -XX:+SafepointTimeout
+      - -XX:SafepointTimeoutDelay=500
+      - -Dfile.encoding=UTF-8
+      - -Djava.net.preferIPv4Stack=true
+      - -Dnetworkaddress.cache.ttl=-1
+      - -XX:-OmitStackTraceInFastThrow
+      - -XX:+CrashOnStackOverflowError
+  linux_sysctl_settings:
+    title: Linux sysctl settings from checklist
+    settings:
+      vm.overcommit_ratio: 100
+      vm.overcommit_memory: 2
+      vm.swappiness: 0
+      fs.file-max: 300000
+      vm.dirty_background_ratio: 1
+      vm.dirty_ratio: 20
+      vm.dirty_expire_centisecs: 500
+      vm.dirty_writeback_centisecs: 100
+  diagnostic_artifacts:
+    title: Diagnostic data to collect
+    items:
+      - process logs with 3+ days retention
+      - /var/log/messages
+      - /var/log/dmesg
+      - /var/log/nmon
+      - workload metrics for Ignite operations such as put/get/tx
+      - disk load and free space
+      - network load
+      - physical memory usage
+      - Ignite data region/off-heap usage
+      - Java heap usage
+      - CPU usage
+      - heap dumps
+      - crash dumps
+      - GC logs with class histogram data
+  jfr_analysis_signals:
+    title: JFR signals to inspect before forming hypotheses
+    items:
+      - Recording quality: duration, incident-window coverage, present event types, stack traces, and thresholds.
+      - Thread timeline: JavaMonitorWait, JavaMonitorEnter, ThreadPark, ThreadSleep, SocketRead, SocketWrite, FileRead, FileWrite, and FileForce events.
+      - GC impact: total paused time, longest pauses, GC causes, and expensive G1 phases.
+      - Allocation pressure: TLAB and outside-TLAB allocation sites, classes, threads, and time buckets.
+      - CPU execution: ExecutionSample and NativeMethodSample hot methods, especially Ignite subsystems.
+      - IO waits: files or remote endpoints with high duration, low bytes per event, or concentration in Ignite WAL/checkpoint/communication paths.
+      - Exception pressure: ExceptionStatistics and throw sites correlated with process logs.
+      - Event absence: missing IO, monitor, allocation, or execution events may mean recording settings hid the signal rather than proving the problem absent.
+      - Large JFR files should be analyzed with streaming readers rather than loading all events at once.
+  ignite_architecture_review:
+    title: Ignite architecture and performance review prompts
+    items:
+      - Identify write API: cache put, putAll, DataStreamer, SQL, transaction, or compute.
+      - Record cache mode, backups, atomicity, write synchronization, persistence, WAL, and checkpoint settings.
+      - Record partition count, affinity key, collocation assumptions, and key distribution.
+      - Separate point reads, local partition scans, distributed SQL, compute/map-reduce, and analytics.
+      - Correlate latency with topology exchange, rebalance, node loss, rolling upgrade, and network segmentation.
+      - Check whether realtime paths share nodes or caches with bulk load, compute, or analytical fanout.
+      - Validate failover with node loss and network partition scenarios, not only normal rolling restart.
+      - For cloud/container deployments, record discovery SPI, address provider, service DNS, ports, NAT/firewall rules, and restart policy.
+      - For client incidents, separate thick client, thin client, server node, embedded node, and service-node behavior.
+      - For transactional workloads, record concurrency, isolation, timeout, touched caches, affinity keys, and retry/idempotency behavior.
+      - For SQL issues, collect query text, query plan, parameters, indexes, distributed join mode, and partition pruning evidence.
+      - For write-heavy benchmarks, measure binary marshalling, object conversion, streamer buffering, and client protocol overhead.
+      - For persistence-enabled clusters, correlate WAL fsync, checkpoint duration, dirty pages, page writes, and storage latency.
+      - For tracing-enabled clusters, collect span-level evidence before guessing between SQL, transaction, network, and storage causes.
+      - For data skew, record partition sizes, primary ownership, hot keys, and node-level CPU/IO imbalance.
+      - For Spark/Flink/Kafka/CDC integration, record connector lag, backpressure, checkpointing, batching, and retry semantics.
+      - For disaster recovery, record backup restore tests, DCR topology, cross-site lag, RPO/RTO, and conflict resolution.
+      - For security-enabled clusters, record TLS/auth settings and whether failures happen on clients, discovery, or rolling restart.
+      - From official docs, collect control.sh/control.bat output for state, baseline, cache diagnostics, transactions, contention, and diagnostic commands.
+      - Record system views or JMX evidence for caches, nodes, transactions, scan queries, continuous queries, services, and compute jobs.
+      - For lost partitions or CacheInvalidStateException, record partition loss policy, affected caches, lost partitions, baseline/topology events, and reset procedure.
+      - For consistency incidents, record idle_verify or partition_reconciliation reports before and after repair.
+      - For SQL index incidents, record validate_indexes output, index inline sizes, index rebuild commands, query plans, and failed statements.
+      - For rebalance incidents, record partitions/bytes left, rebalance rate, full versus historical rebalance mode, WAL history availability, and node-level IO/network.
+      - For persistence incidents, record work directory, storage path, WAL path, WAL archive path, maintenance-mode task output, and whether storage uses an OS temp path.
+      - For PITR or restore incidents, record snapshot metadata, requested restore point, WAL archive continuity, and missing WAL segments.
+      - For thin-client incidents, record session counts, reconnect storms, load balancer behavior, partition awareness, and client/server version compatibility.
+      - For COPY FROM failures, record temp path mount flags, native library extraction errors, compression mode, and file permissions.
+      - For classpath and connector failures, record full process classpath, optional Ignite modules, extension versions, plugin/classloader boundaries, and Java version.
+      - For Spring or CacheStore/JDBC incidents, record repository/cache-store API path, generated SQL, JDBC dialect, write-through/write-behind settings, and external database capabilities.
+      - For continuous-query incidents, record registration node, remote filters, listener lifecycle, client shutdown/reconnect history, and slow-client queue evidence.
+      - For thin clients, record partition awareness, client connector config, protocol/version compatibility, session count, and outbound queue warnings.
+      - For large SQL results, record query plan, result cardinality, fetch/page size, client consumption rate, scan-query/system-view evidence, and heap/network pressure.
+      - For DataStreamer incidents, record buffer sizes, flush frequency, per-node parallelism, receiver cost, allowOverwrite, and downstream WAL/checkpoint pressure.
+      - For binary metadata or affinity-key conflicts, record key/value class versions, @AffinityKeyMapped fields, QueryEntity definitions, binary metadata, and local work/db state.
+      - For Java 17 or newer runtimes, record JVM version and effective --add-opens flags for every server, client, IDE, Gradle, or service process.
+      - For work-directory failures, record effective Ignite work directory, storage/WAL paths, mount flags, permissions, and whether the path changed between runs.
+      - For system or volatile data-region OOM, record systemRegionInitialSize/systemRegionMaxSize, internal cache/service/metadata activity, and user data-region sizes separately.
+      - For cross-node drift, diff effective Ignite/JVM/cache/data-region/discovery/communication configs and versions across all nodes, not only source templates.
+      - For external callbacks, record CacheStore/listener/receiver/service/compute external calls and correlate their latency with Ignite thread stalls.
+      - For clock/window quality, record node clock skew, time zones, artifact first/last timestamps, and confidence of cross-artifact correlation.
+      - For rebalance heap pressure, record rebalanceBatchSize, rebalanceBatchesPrefetchCount, rebalanceThreadPoolSize, supply message sizes, in-flight bytes, and received-but-not-applied batches.
+      - For stuck transactions after network instability, record tx state, topology/exchange events, retry settings, client reconnects, and control utility tx diagnostics before kill.
+      - For custom/global indexes, record primary storage value, index/brief cache entries, partition, primary/backup node queryability, and inaccessible hosts.
+      - For Ignite test/CI incidents, record startGrid/stopGrid counts and durations, persistence cleanup, checkpoint/WAL/snapshot teardown, and slow suites/classes.
+  ignite2_youtube_transcript_corpus:
+    title: Temporary normalized Ignite 2 YouTube transcript corpus
+    temp_path: C:/Tmp/ignite2-youtube-transcripts-python-20260607-160900
+    manifest: C:/Tmp/ignite2-youtube-transcripts-python-20260607-160900/manifest.json
+    found_files: 27
+    unique_transcripts: 24
+    language_scope:
+      - Russian
+      - English
+    note: >
+      Corpus is temporary and intentionally not checked into the repository.
+      It records local YouTube subtitle files discovered in Downloads and
+      normalized for one knowledge-base extraction pass.
+  english_ignite_youtube_expanded_corpus:
+    title: Expanded temporary English Apache Ignite YouTube transcript corpus
+    temp_path: C:/Tmp/ignite-english-youtube-transcripts-expanded-20260607
+    manifest: C:/Tmp/ignite-english-youtube-transcripts-expanded-20260607/manifest.json
+    candidate_videos: 212
+    videos_with_transcripts: 199
+    unique_transcripts: 198
+    channels_observed: 9
+    discovery:
+      - GridGain Systems channel videos and streams.
+      - YouTube search for Ignite Summit, IMC Summit, Databricks, Spark Summit, and ASF Apache Ignite talks.
+      - English subtitles and auto-subtitles only.
+    note: >
+      Corpus is temporary and intentionally not checked into the repository.
+      Use the manifest to reproduce which video URLs and subtitle files informed
+      this knowledge-base extraction pass.
+  official_docs_enrichment_20260607:
+    title: Official Apache Ignite 2.x and GridGain 8.x documentation enrichment
+    sources:
+      - apache-ignite2-official-docs-20260607
+      - gridgain8-official-docs-20260607
+    additions:
+      - Failure handler and critical system-worker diagnostics.
+      - control.sh/control.bat, JMX, and system-view evidence collection.
+      - CacheInvalidStateException, lost partitions, partition loss policy, idle_verify, and partition_reconciliation.
+      - SQL validate_indexes, index rebuild, and index inline-size mismatch checks.
+      - Rebalance progress metrics and full versus historical rebalance distinction.
+      - Persistence path, temp-directory, WAL/corruption, and maintenance-mode checks.
+      - Thin-client session pressure, PITR WAL-history gaps, and COPY FROM native-library loading failures.
+  common_problem_search_enrichment_20260607:
+    title: Common public-problem search enrichment
+    sources:
+      - local-stackoverflow-ignite2-frequency-20260607
+      - external-ignite-common-problems-search-20260607
+    additions:
+      - Classpath, optional module, connector, and peer-deployment diagnostics.
+      - Spring Cache, IgniteRepository, CacheStore/JDBC dialect, and generated-upsert behavior.
+      - Continuous-query lifecycle under client churn and topology changes.
+      - Thin-client partition awareness, slow outbound queues, client connector, and protocol mismatch checks.
+      - Large SQL result materialization and scan/fetch pressure.
+      - DataStreamer buffering, flush cadence, receiver cost, and downstream backpressure.
+  local_cprojects_enrichment_20260607:
+    title: Neighboring C:/projects troubleshooting enrichment
+    sources:
+      - local-cprojects-troubleshooting-notes-20260607
+    additions:
+      - Binary metadata, affinity-key, QueryEntity, and stale local metadata drift.
+      - Java module --add-opens startup/runtime compatibility checks.
+      - Ignite work-directory path, permissions, mount, and local-state checks.
+      - System/volatile data-region OOM checks.
+      - Cross-node config/version drift and clock/window quality checks.
+      - External dependency calls inside Ignite callbacks.
+      - Rebalance heap and in-flight byte pressure diagnostics.
+      - Stuck transactions after unstable network and explicit tx recovery evidence.
+      - Custom global-index consistency checks.
+      - Ignite test/CI grid lifecycle overhead diagnostics.

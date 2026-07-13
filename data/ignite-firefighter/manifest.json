@@ -1,0 +1,41 @@
+{
+  "schema_version": "1",
+  "copied_at": "2026-06-24",
+  "source_repository": "git@github.com:superminkfan/ignite-firefighter.git",
+  "source_branch": "main",
+  "source_commit": "5cb97512b5ae7e43f9822b7f2ae0b3e9092878f9",
+  "files": [
+    {
+      "path": "troubleshooting/ignite-troubleshooting-tree.yaml",
+      "sha256": "3173adbcc2ebb9b4afb6631b249e24fba61d4c2cb24b60cd8f7e829217f5a0a4",
+      "source_type": "ignite-firefighter-tree"
+    },
+    {
+      "path": "troubleshooting/gc-collectors-troubleshooting.md",
+      "sha256": "6826c5c94757547fffcb103f23c67f2e098e4f4ee10c290f16c8c59809a5fbaa",
+      "source_type": "ignite-firefighter-notes"
+    },
+    {
+      "path": "stackoverflow/answered-questions.combined.jsonl",
+      "sha256": "113b41718f3ac1e12566f91ed7dfb006949b3bfe49b95138c0f1f9abe936845d",
+      "source_type": "stackoverflow-kb"
+    },
+    {
+      "path": "stackoverflow/manifest.json",
+      "sha256": "76a8e6a32b6235c575659bfb16c16c3077ba0c3e778f4f67eae2a6028f23f444"
+    },
+    {
+      "path": "mailing-list/answered_threads.mbox.gz",
+      "sha256": "b567c2b3baebbd4923a13f4f5f1d4734a30a80e1e2b47a1db469b71b1e170c1a",
+      "source_type": "ignite-user-mailing-list"
+    },
+    {
+      "path": "mailing-list/threads_index.tsv",
+      "sha256": "48ea06eb220b78498f5c5ea58ee18ce2904ba02da5fe546c7677ee9fc41f59a0"
+    },
+    {
+      "path": "mailing-list/manifest.json",
+      "sha256": "4a008c82a276b24c6c78264c257aaa4c8bc0d93afdc168823f07d1e63ed2a2a6"
+    }
+  ]
+}

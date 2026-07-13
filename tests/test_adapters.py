@@ -37,7 +37,10 @@ def test_chroma_adapter_implements_vector_store_port(tmp_path):
     assert store.location == str(tmp_path / "chroma")
     assert len(store.list_documents()) == 2
     assert store.similarity_search("WAL failure", k=1)[0].metadata["chunk_id"] == "wal-1"
+    assert store.keyword_search("checkpoint WAL", k=1)[0].metadata["chunk_id"] == "wal-1"
+    assert (tmp_path / "chroma/rag_lexical.sqlite3").is_file()
 
     store.delete_where({"source_type": "docs"})
 
     assert store.list_documents() == []
+    assert store.keyword_search("checkpoint WAL", k=1) == []

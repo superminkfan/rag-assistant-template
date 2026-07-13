@@ -22,11 +22,24 @@ def build_chunks(
     from langchain.text_splitter import RecursiveCharacterTextSplitter
 
     sections: list[Document] = []
-    jira_chunks: list[Document] = []
+    record_chunks: list[Document] = []
     for document in documents:
         if document.metadata.get("source_format") == "jira-snapshot":
-            jira_chunks.extend(
+            record_chunks.extend(
                 _split_jira_snapshot_document(
+                    document,
+                    chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
+                )
+            )
+            continue
+        if document.metadata.get("source_format") in {
+            "qa-pair",
+            "mail-message",
+            "decision-record",
+        }:
+            record_chunks.extend(
+                _split_contextual_document(
                     document,
                     chunk_size=chunk_size,
                     chunk_overlap=chunk_overlap,
@@ -64,7 +77,7 @@ def build_chunks(
         keep_separator=False,
         strip_whitespace=False,
     )
-    chunks = splitter.split_documents(sections) + jira_chunks
+    chunks = splitter.split_documents(sections) + record_chunks
 
     ids: list[str] = []
     source_counts: dict[str, int] = {}
@@ -134,6 +147,68 @@ def _jira_chunk_prefix(metadata: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _split_contextual_document(
+    document: SourceDocument,
+    *,
+    chunk_size: int,
+    chunk_overlap: int,
+) -> list[object]:
+    """Split a record while repeating identity and trust context in every chunk."""
+
+    from langchain.schema import Document
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+    prefix = _record_chunk_prefix(document.metadata)
+    body_chunk_size = max(160, chunk_size - len(prefix) - 2)
+    body_overlap = min(chunk_overlap, max(0, body_chunk_size // 4))
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=body_chunk_size,
+        chunk_overlap=body_overlap,
+        length_function=len,
+        separators=[
+            "\n## ",
+            "\n### ",
+            "\n```",
+            "\n\n",
+            "\n- ",
+            "\n",
+            " ",
+            "",
+        ],
+        keep_separator=True,
+    )
+    parts = splitter.split_text(document.page_content) or [document.page_content]
+    return [
+        Document(
+            page_content=f"{prefix}\n\n{part.strip()}\n",
+            metadata=dict(document.metadata),
+        )
+        for part in parts
+        if part.strip()
+    ]
+
+
+def _record_chunk_prefix(metadata: dict[str, object]) -> str:
+    lines = [
+        f"Title: {metadata.get('title') or 'unknown'}",
+        f"Record ID: {metadata.get('record_id') or 'unknown'}",
+        f"Record Type: {metadata.get('record_type') or 'unknown'}",
+        f"Trust Tier: {metadata.get('trust_tier') or 'unknown'}",
+    ]
+    optional_fields = (
+        ("Source URL", "source_url"),
+        ("Tags", "tags"),
+        ("Product Version", "product_version"),
+        ("Published", "published_at"),
+        ("Accepted", "is_accepted"),
+    )
+    for label, key in optional_fields:
+        value = metadata.get(key)
+        if value not in (None, ""):
+            lines.append(f"{label}: {value}")
+    return "\n".join(lines)
+
+
 def ingest_source(
     source_path: Path,
     *,
@@ -144,6 +219,7 @@ def ingest_source(
     limit: int | None = None,
     batch_size: int = 64,
     replace_source_type: bool = False,
+    replace_source_id: bool = False,
     progress: Callable[[str], None] | None = None,
 ) -> dict[str, int | str]:
     """Ingest documentation through the configured vector-store port."""
@@ -166,6 +242,20 @@ def ingest_source(
         vector_store.delete_where({"source_type": source_type})
         if progress:
             progress(f"Deleted existing chunks with source_type={source_type}.")
+    if replace_source_id:
+        source_ids = {
+            str(document.metadata.get("source_id") or "")
+            for document in source_documents
+        }
+        source_ids.discard("")
+        if len(source_ids) != 1:
+            raise ValueError(
+                "--replace-source-id requires exactly one non-empty source_id in the snapshot"
+            )
+        source_id = next(iter(source_ids))
+        vector_store.delete_where({"source_id": source_id})
+        if progress:
+            progress(f"Deleted existing chunks with source_id={source_id}.")
 
     for start in range(0, len(chunks), batch_size):
         end = min(start + batch_size, len(chunks))

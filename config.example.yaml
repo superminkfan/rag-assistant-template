@@ -1,6 +1,7 @@
 paths:
   datagrid_docs: /path/to/datagrid-docs
   ignite_docs: ./data
+  ignite_firefighter_kb: ./data/ignite-firefighter
   artifacts_root: ~/.rag-assistant/artifacts
   db_path: ~/.rag-assistant/artifacts/chroma
 
@@ -9,6 +10,10 @@ jira:
   jql: project = EXAMPLE ORDER BY key ASC
   cert_path: /path/to/client.pem
   output_root: ~/.rag-assistant/artifacts/jira/export
+
+confluence:
+  output_root: ~/.rag-assistant/artifacts/confluence
+  apache_seed_url: https://cwiki.apache.org/confluence/display/IGNITE/Design+Documents
 
 ollama:
   model: llama3.2:latest

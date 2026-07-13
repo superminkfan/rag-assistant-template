@@ -1,0 +1,25 @@
+﻿{
+    "generated_at":  "2026-06-07T12:30:26.7574888Z",
+    "topic":  "StackOverflow answered questions for Apache Ignite 2",
+    "format":  "JSON Lines; one normalized record per answered StackOverflow question / closed commented GitHub issue; source bodies are preserved without summarization",
+    "compaction":  "Source dumps, duplicate timestamp/latest GitHub exports, index files, gzip archives, and one-off export/build scripts were removed after merging.",
+    "sources":  [
+                    {
+                        "name":  "stackoverflow",
+                        "status":  "merged and removed",
+                        "records":  2057
+                    },
+                    {
+                        "name":  "github",
+                        "status":  "merged and removed",
+                        "records":  25
+                    }
+                ],
+    "records":  2082,
+    "files":  {
+                  "combined_jsonl":  "answered-questions.combined.jsonl"
+              },
+    "bytes":  {
+        "combined_jsonl":  10082528
+              }
+}

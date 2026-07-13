@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import math
 import re
 
@@ -114,6 +115,8 @@ def candidate_score(query: str, candidate: RetrievalCandidate) -> float:
     score += candidate.keyword_score
     score += metadata_score(query, document)
     score += strong_token_coverage_boost(query, document)
+    score += source_quality_score(document)
+    score += version_compatibility_score(query, document)
     return score
 
 
@@ -125,7 +128,44 @@ def select_final_context(
 
     if final_k <= 0:
         return []
-    return [document for _, document in ranked[:final_k]]
+
+    selected: list[RagDocument] = []
+    selected_keys: set[str] = set()
+    record_counts: dict[str, int] = {}
+    source_type_counts: dict[str, int] = {}
+    source_type_limit = max(2, math.ceil(final_k * 0.67))
+
+    for _, document in ranked:
+        metadata = getattr(document, "metadata", {}) or {}
+        key = document_key(document)
+        record_id = str(metadata.get("record_id") or key)
+        source_type = str(metadata.get("source_type") or "unknown")
+        if record_counts.get(record_id, 0) >= 2:
+            continue
+        if source_type_counts.get(source_type, 0) >= source_type_limit:
+            continue
+        selected.append(document)
+        selected_keys.add(key)
+        record_counts[record_id] = record_counts.get(record_id, 0) + 1
+        source_type_counts[source_type] = source_type_counts.get(source_type, 0) + 1
+        if len(selected) == final_k:
+            return selected
+
+    # Fill a sparse result without the source-type cap, while keeping record diversity.
+    for _, document in ranked:
+        key = document_key(document)
+        if key in selected_keys:
+            continue
+        metadata = getattr(document, "metadata", {}) or {}
+        record_id = str(metadata.get("record_id") or key)
+        if record_counts.get(record_id, 0) >= 2:
+            continue
+        selected.append(document)
+        selected_keys.add(key)
+        record_counts[record_id] = record_counts.get(record_id, 0) + 1
+        if len(selected) == final_k:
+            break
+    return selected
 
 
 def keyword_search(
@@ -138,6 +178,13 @@ def keyword_search(
 
     if k <= 0:
         return []
+
+    persistent_search = getattr(vector_store, "keyword_search", None)
+    if callable(persistent_search):
+        try:
+            return list(persistent_search(query, k=k))
+        except Exception:
+            pass
 
     try:
         documents = vector_store.list_documents()
@@ -197,9 +244,60 @@ def metadata_score(query: str, document: RagDocument) -> float:
     score += _metadata_field_score(query, metadata.get("title"), weight=1.5)
     score += _metadata_field_score(query, metadata.get("section"), weight=1.0)
     score += _metadata_field_score(query, metadata.get("component"), weight=0.8)
+    score += _metadata_field_score(query, metadata.get("tags"), weight=0.8)
+    score += _metadata_field_score(query, metadata.get("product_version"), weight=1.2)
+    score += _metadata_field_score(query, metadata.get("record_type"), weight=0.4)
     source = metadata.get("source_path") or metadata.get("source")
     score += _metadata_field_score(query, source, weight=0.3)
     return score
+
+
+def source_quality_score(document: RagDocument) -> float:
+    """Prefer authoritative and curated material without suppressing case evidence."""
+
+    metadata = getattr(document, "metadata", {}) or {}
+    default_authority = {
+        "datagrid-docs": 1.0,
+        "ignite-docs": 1.0,
+        "confluence-snapshot": 0.9,
+        "ignite-firefighter-notes": 0.85,
+        "ignite-firefighter-tree": 0.8,
+        "jira-snapshot": 0.55,
+        "stackoverflow-kb": 0.2,
+        "ignite-user-mailing-list": 0.05,
+    }
+    source_type = str(metadata.get("source_type") or "")
+    authority = _safe_float(
+        metadata.get("authority_score"), default_authority.get(source_type, 0.3)
+    )
+    quality = _safe_float(metadata.get("quality_score"), 0.5)
+    score = authority * 2.0 + quality * 0.6
+    if metadata.get("is_accepted") is True:
+        score += 0.25
+    if source_type in {"stackoverflow-kb", "ignite-user-mailing-list"}:
+        score += _community_freshness_bonus(str(metadata.get("published_at") or ""))
+    return score
+
+
+def version_compatibility_score(query: str, document: RagDocument) -> float:
+    """Reward explicit product-version matches and mildly penalize conflicts."""
+
+    query_versions = set(re.findall(r"\b\d+\.\d+(?:\.\d+)?\b", query))
+    if not query_versions:
+        return 0.0
+    metadata = getattr(document, "metadata", {}) or {}
+    document_versions = set(
+        re.findall(r"\b\d+\.\d+(?:\.\d+)?\b", str(metadata.get("product_version") or ""))
+    )
+    if not document_versions:
+        return 0.0
+    if query_versions & document_versions:
+        return 3.0
+    query_majors = {value.split(".", 1)[0] for value in query_versions}
+    document_majors = {value.split(".", 1)[0] for value in document_versions}
+    if query_majors & document_majors:
+        return -0.25
+    return -1.25
 
 
 def strong_token_coverage_boost(query: str, document: RagDocument) -> float:
@@ -239,7 +337,16 @@ def _document_tokens(document: RagDocument) -> set[str]:
     metadata = getattr(document, "metadata", {}) or {}
     metadata_text = " ".join(
         str(metadata.get(key) or "")
-        for key in ("title", "section", "component", "source_path", "source")
+        for key in (
+            "title",
+            "section",
+            "component",
+            "tags",
+            "product_version",
+            "record_type",
+            "source_path",
+            "source",
+        )
     )
     return set(tokenize(f"{getattr(document, 'page_content', '')}\n{metadata_text}"))
 
@@ -302,6 +409,21 @@ def document_key(document: RagDocument) -> str:
         return str(chunk_id)
     source = metadata.get("source") or metadata.get("source_path") or ""
     return f"{source}:{hash(getattr(document, 'page_content', ''))}"
+
+
+def _safe_float(value: object, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _community_freshness_bonus(published_at: str) -> float:
+    match = re.match(r"^(\d{4})", published_at)
+    if not match:
+        return 0.0
+    age = max(0, datetime.now(timezone.utc).year - int(match.group(1)))
+    return max(0.0, 0.35 - age * 0.035)
 
 
 STOP_WORDS = {

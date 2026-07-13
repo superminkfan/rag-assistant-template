@@ -71,5 +71,5 @@ def test_analyze_incident_uses_injected_dependencies():
     )
 
     assert retriever.queries == [("WAL archive grows quickly", None)]
-    assert "- Check WAL [1]" in response
+    assert "- Check WAL [источник не указан]" in response
     assert response.endswith("Sources:\n[1] wal.md - WAL")
